@@ -35,7 +35,7 @@ export default function App() {
       <div className="stats-bar">
         <div className="stat-card">
           <div className="stat-num">{ep02.length}</div>
-          <div className="stat-label">Total ep02</div>
+          <div className="stat-label">Total alumnos</div>
         </div>
         <div className="stat-card">
           <div className="stat-num">{new Set(ep02.map((a) => a.apellido)).size}</div>
@@ -52,7 +52,7 @@ export default function App() {
       {/* ── Tabla ── */}
       <div className="card">
         <div className="card-title">
-          📋 Lista de ep02
+          📋 Lista de alumnos
           {loading && (
             <span style={{ fontSize: '.8rem', color: 'var(--text-muted)', marginLeft: 'auto' }}>
               Cargando...
@@ -78,7 +78,7 @@ export default function App() {
           marginTop: '1rem'
         }}
       >
-        API: <code>{import.meta.env.VITE_API_URL || 'http://localhost:8080'}/ep02</code>
+        Laboratorio de Ingeniería DevOps
       </footer>
     </div>
   )

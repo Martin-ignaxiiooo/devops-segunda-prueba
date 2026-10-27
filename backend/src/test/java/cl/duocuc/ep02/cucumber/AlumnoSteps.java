@@ -31,6 +31,18 @@ public class AlumnoSteps extends CucumberSpringConfiguration {
         return "http://localhost:" + port + "/ep02";
     }
 
+    private HttpHeaders csrfHeaders(MediaType contentType) {
+        ResponseEntity<String> response = restTemplate.getForEntity(baseUrl(), String.class);
+        String cookie = Objects.requireNonNull(response.getHeaders().get(HttpHeaders.SET_COOKIE))
+                .stream().filter(value -> value.startsWith("XSRF-TOKEN="))
+                .findFirst().orElseThrow().split(";", 2)[0];
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(contentType);
+        headers.set(HttpHeaders.COOKIE, cookie);
+        headers.set("X-XSRF-TOKEN", cookie.substring("XSRF-TOKEN=".length()));
+        return headers;
+    }
+
     @Before
     public void limpiarEstado() {
         lastResponse = null;
@@ -48,8 +60,7 @@ public class AlumnoSteps extends CucumberSpringConfiguration {
     @Given("existe un alumno con nombre {string} y apellido {string}")
     public void existeUnAlumno(String nombre, String apellido) {
         Alumno alumno = new Alumno(null, nombre, apellido);
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpHeaders headers = csrfHeaders(MediaType.APPLICATION_JSON);
         HttpEntity<Alumno> request = new HttpEntity<>(alumno, headers);
 
         ResponseEntity<Alumno> response =
@@ -69,8 +80,7 @@ public class AlumnoSteps extends CucumberSpringConfiguration {
     @When("creo un alumno con nombre {string} y apellido {string}")
     public void creoUnAlumno(String nombre, String apellido) {
         Alumno alumno = new Alumno(null, nombre, apellido);
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpHeaders headers = csrfHeaders(MediaType.APPLICATION_JSON);
         HttpEntity<Alumno> request = new HttpEntity<>(alumno, headers);
 
         lastResponse = restTemplate.postForEntity(baseUrl(), request, Alumno.class);
@@ -79,12 +89,17 @@ public class AlumnoSteps extends CucumberSpringConfiguration {
         }
     }
 
+    @When("intento crear un alumno sin token CSRF")
+    public void crearSinCsrf() {
+        lastResponse = restTemplate.postForEntity(
+                baseUrl(), new Alumno(null, "Prueba", "Sin token"), String.class);
+    }
+
     @When("actualizo el alumno con nombre {string} y apellido {string}")
     public void actualizoElAlumno(String nombre, String apellido) {
         assertNotNull(lastCreatedId, "Debe existir un alumno creado previamente");
         Alumno alumno = new Alumno(null, nombre, apellido);
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpHeaders headers = csrfHeaders(MediaType.APPLICATION_JSON);
         HttpEntity<Alumno> request = new HttpEntity<>(alumno, headers);
 
         lastResponse =
@@ -99,7 +114,7 @@ public class AlumnoSteps extends CucumberSpringConfiguration {
                 restTemplate.exchange(
                         baseUrl() + "/" + lastCreatedId,
                         HttpMethod.DELETE,
-                        HttpEntity.EMPTY,
+                        new HttpEntity<>(csrfHeaders(MediaType.APPLICATION_JSON)),
                         Void.class);
     }
 
@@ -111,8 +126,7 @@ public class AlumnoSteps extends CucumberSpringConfiguration {
     @When("importo el CSV {string}")
     public void importoElCSV(String csv) {
         String csvContent = csv.replace("\\n", "\n");
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.TEXT_PLAIN);
+        HttpHeaders headers = csrfHeaders(MediaType.TEXT_PLAIN);
         HttpEntity<String> request = new HttpEntity<>(csvContent, headers);
 
         lastResponse = restTemplate.postForEntity(baseUrl() + "/import", request, Void.class);

@@ -3,7 +3,7 @@ package cl.duocuc.ep02.infrastructure.controller;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -13,6 +13,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.context.annotation.Import;
+import cl.duocuc.ep02.config.SecurityConfig;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -23,6 +25,7 @@ import cl.duocuc.ep02.application.AlumnoService;
 import cl.duocuc.ep02.domain.Alumno;
 
 @WebMvcTest(AlumnoController.class)
+@Import(SecurityConfig.class)
 @WithMockUser
 class AlumnoControllerTest {
 
@@ -31,6 +34,19 @@ class AlumnoControllerTest {
     @MockitoBean private AlumnoService service;
 
     @Autowired private ObjectMapper objectMapper;
+
+    private org.springframework.test.web.servlet.request.RequestPostProcessor csrfToken(boolean valid)
+            throws Exception {
+        var response = mockMvc.perform(get("/ep02"))
+                .andExpect(status().isOk()).andReturn().getResponse();
+        var cookie = response.getCookie("XSRF-TOKEN");
+        assertNotNull(cookie, "El GET debe emitir la cookie CSRF de la SPA");
+        return request -> {
+            request.setCookies(cookie);
+            request.addHeader("X-XSRF-TOKEN", valid ? cookie.getValue() : "invalid");
+            return request;
+        };
+    }
 
     @Test
     void listar_retorna200ConLista() throws Exception {
@@ -53,7 +69,7 @@ class AlumnoControllerTest {
 
         mockMvc.perform(
                         post("/ep02")
-                                .with(csrf())
+                                .with(csrfToken(true))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isOk())
@@ -69,7 +85,7 @@ class AlumnoControllerTest {
 
         mockMvc.perform(
                         put("/ep02/4")
-                                .with(csrf())
+                                .with(csrfToken(true))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isOk())
@@ -81,7 +97,7 @@ class AlumnoControllerTest {
     void eliminar_retorna200() throws Exception {
         doNothing().when(service).eliminar(5L);
 
-        mockMvc.perform(delete("/ep02/5").with(csrf())).andExpect(status().isOk());
+        mockMvc.perform(delete("/ep02/5").with(csrfToken(true))).andExpect(status().isOk());
 
         verify(service, times(1)).eliminar(5L);
     }
@@ -113,7 +129,7 @@ class AlumnoControllerTest {
 
         mockMvc.perform(
                         post("/ep02/import")
-                                .with(csrf())
+                                .with(csrfToken(true))
                                 .contentType(MediaType.TEXT_PLAIN)
                                 .content(csv))
                 .andExpect(status().isOk());
@@ -129,11 +145,29 @@ class AlumnoControllerTest {
 
         mockMvc.perform(
                         post("/ep02/import")
-                                .with(csrf())
+                                .with(csrfToken(true))
                                 .contentType(MediaType.TEXT_PLAIN)
                                 .content(csv))
                 .andExpect(status().isOk());
 
         verify(service, times(1)).crear(any(Alumno.class));
+    }
+    @Test
+    void crear_sinTokenCsrfRetorna403() throws Exception {
+        mockMvc.perform(post("/ep02")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\":\"Prueba\",\"apellido\":\"Seguridad\"}"))
+                .andExpect(status().isForbidden());
+        verifyNoInteractions(service);
+    }
+
+    @Test
+    void crear_conTokenCsrfInvalidoRetorna403() throws Exception {
+        mockMvc.perform(post("/ep02")
+                        .with(csrfToken(false))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\":\"Prueba\",\"apellido\":\"Seguridad\"}"))
+                .andExpect(status().isForbidden());
+        verify(service, never()).crear(any(Alumno.class));
     }
 }
