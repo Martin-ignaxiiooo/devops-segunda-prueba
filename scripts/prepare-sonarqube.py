@@ -14,7 +14,7 @@ for attempt in range(120):
         with urllib.request.urlopen(host + "/api/system/status", timeout=5) as response:
             if json.load(response)["status"] == "UP":
                 break
-    except (urllib.error.URLError, TimeoutError, KeyError):
+    except (urllib.error.URLError, OSError, KeyError):
         pass
     time.sleep(5)
 else:

@@ -89,12 +89,17 @@ jobs:
         env:
           SONAR_HOST_URL: http://localhost:9000
           SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+      - name: Exportar evidencia del servidor temporal
+        if: always()
+        run: python3 scripts/export-sonarqube.py
       - name: Conservar informe de analisis
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: sonarqube-analysis
-          path: .scannerwork/report-task.txt
+          path: |
+            .scannerwork/report-task.txt
+            reports/sonarqube/
           if-no-files-found: ignore
   containers:
     name: Imagen y Trivy - ${{ matrix.component }}
@@ -200,6 +205,10 @@ jobs:
           echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
           sudo install -m 0755 kubectl /usr/local/bin/kubectl
           aws eks update-kubeconfig --name "$EKS_CLUSTER_NAME" --region "$AWS_REGION"
+      - name: Configurar controlador EBS para el rol del Learner Lab
+        run: |
+          kubectl patch deployment ebs-csi-controller -n kube-system --type merge --patch-file infra/ebs-csi-lab-patch.json
+          kubectl rollout status deployment/ebs-csi-controller -n kube-system --timeout=180s
       - name: Aplicar y comprobar despliegue
         run: bash scripts/deploy.sh
       - name: Evidencia de trazabilidad

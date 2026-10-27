@@ -1,11 +1,11 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.5.16'
+    id 'org.springframework.boot' version '4.0.9'
     id 'io.spring.dependency-management' version '1.1.7'
     id 'jacoco'
     id "org.sonarqube" version "7.1.0.6387"
     id 'info.solidsoft.pitest' version '1.19.0-rc.2'
-    id 'org.springframework.cloud.contract' version '4.3.4'
+    id 'org.springframework.cloud.contract' version '5.0.3'
     // ── Calidad de código ─────────────────────────────────────────────────
     id 'org.openrewrite.rewrite' version '7.32.0'   // arregla código automáticamente
     id 'com.diffplug.spotless' version '7.0.4'       // limpia formato
@@ -27,9 +27,8 @@ java {
 
 repositories { mavenCentral() }
 
-// Forzar versiones seguras de dependencias con CVEs conocidos
-// Spring Boot 3.5.3 trae Tomcat 10.1.42 — forzamos 10.1.54 (fix CVEs)
-ext['tomcat.version'] = '10.1.60'
+// Driver JDBC con los parches requeridos por el escaneo de imagen.
+ext['postgresql.version'] = '42.7.12'
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -37,7 +36,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.projectlombok:lombok'
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.17'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3'
 
     // PostgreSQL — driver de producción y desarrollo
     runtimeOnly 'org.postgresql:postgresql'
@@ -48,18 +47,21 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
+    testImplementation 'org.springframework.boot:spring-boot-resttestclient'
     testImplementation 'org.springframework.security:spring-security-test'
 
     // Cucumber - tests de aceptación
-    testImplementation 'io.cucumber:cucumber-java:7.20.1'
-    testImplementation 'io.cucumber:cucumber-spring:7.20.1'
-    testImplementation 'io.cucumber:cucumber-junit-platform-engine:7.20.1'
-    testImplementation 'org.junit.platform:junit-platform-suite:1.11.4'
-    testRuntimeOnly 'org.junit.platform:junit-platform-suite-engine:1.11.4'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.11.4'
+    testImplementation 'io.cucumber:cucumber-java:8.0.4'
+    testImplementation 'io.cucumber:cucumber-spring:8.0.4'
+    testImplementation 'io.cucumber:cucumber-junit-platform-engine:8.0.4'
+    testImplementation 'org.junit.platform:junit-platform-suite'
+    testRuntimeOnly 'org.junit.platform:junit-platform-suite-engine'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
     // Spring Cloud Contract - tests de contrato
-    testImplementation 'org.springframework.cloud:spring-cloud-starter-contract-verifier:4.3.4'
+    testImplementation 'org.springframework.cloud:spring-cloud-starter-contract-verifier:5.0.3'
 }
 
 test {

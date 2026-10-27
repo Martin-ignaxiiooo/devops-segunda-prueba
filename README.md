@@ -2,7 +2,7 @@
 
 Repositorio de entrega: https://github.com/Martin-ignaxiiooo/devops-segunda-prueba
 
-Aplicación base: Gestor de Alumnos del [laboratorio del profesor](https://github.com/mauriciovelasquezduoc/202602Devops01/). Conserva Spring Boot / Gradle / Java 21, React / Vite y PostgreSQL 16. Los datos iniciales son ejemplos del laboratorio.
+Aplicación base: Gestor de Alumnos del [laboratorio del profesor](https://github.com/mauriciovelasquezduoc/202602Devops01/). Utiliza Spring Boot 4 / Gradle / Java 21, React / Vite y PostgreSQL 16. Los datos iniciales son ejemplos del laboratorio.
 
 ## Estado de la entrega
 
@@ -128,7 +128,7 @@ Abre http://localhost:8081. El pipeline comprueba HTTP y la consulta de alumnos 
 
 PostgreSQL mantiene una réplica y un volumen EBS gp3 de 2 GiB. Su política de recuperación `Retain` conserva el volumen ante la eliminación del PVC; debe inventariarse al limpiar el laboratorio porque sigue consumiendo almacenamiento.
 
-El backend inicia con dos réplicas y un HPA de dos a tres, al 70% de CPU. El frontend inicia con dos réplicas. Todos tienen límites de memoria y CPU, sondas de salud y reinicio gestionado por Kubernetes. El clúster inicia con un nodo; el máximo de dos del nodegroup es un límite de tamaño, no un autoscaler de nodos. El HPA requiere Metrics Server. La persistencia requiere EBS CSI.
+El backend inicia con dos réplicas y un HPA de dos a tres, al 70% de CPU. El frontend inicia con dos réplicas. Todos tienen límites de memoria y CPU, sondas de salud y reinicio gestionado por Kubernetes. El clúster inicia con un nodo; el máximo de dos del nodegroup es un límite de tamaño, no un autoscaler de nodos. El HPA requiere Metrics Server. La persistencia requiere EBS CSI. El parche `infra/ebs-csi-lab-patch.json` configura una réplica del controlador EBS en la red del nodo, para que utilice el rol EC2 `LabRole` en este laboratorio sin crear roles IAM. Se limita al componente de almacenamiento; las aplicaciones conservan la red normal de pods. El pipeline aplica y comprueba este ajuste antes del despliegue.
 
 EKS y el almacenamiento pueden generar cargos aunque la sesión del laboratorio termine. La eliminación debe planificarse después de registrar las evidencias y conservar los datos necesarios. Este repositorio no ejecuta borrados automáticos sobre la cuenta.
 
