@@ -1,16 +1,16 @@
 buildscript {
     configurations.classpath {
         resolutionStrategy.force(
-            'org.apache.httpcomponents.core5:httpcore5:5.4.3',
-            'org.apache.httpcomponents.core5:httpcore5-h2:5.4.3',
-            'org.apache.httpcomponents.client5:httpclient5:5.6.3'
+            'org.apache.httpcomponents.core5:httpcore5:5.4.4',
+            'org.apache.httpcomponents.core5:httpcore5-h2:5.4.4',
+            'org.apache.httpcomponents.client5:httpclient5:5.6.5'
         )
     }
 }
 
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '4.0.9'
+    id 'org.springframework.boot' version '4.1.2'
     id 'jacoco'
 }
 
@@ -26,15 +26,15 @@ java {
 repositories { mavenCentral() }
 
 dependencies {
-    implementation platform('org.springframework.boot:spring-boot-dependencies:4.0.9')
-    annotationProcessor platform('org.springframework.boot:spring-boot-dependencies:4.0.9')
+    implementation platform('org.springframework.boot:spring-boot-dependencies:4.1.2')
+    annotationProcessor platform('org.springframework.boot:spring-boot-dependencies:4.1.2')
 
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
-    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3'
-    runtimeOnly 'org.postgresql:postgresql:42.7.12'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1'
+    runtimeOnly 'org.postgresql:postgresql:42.7.14'
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
