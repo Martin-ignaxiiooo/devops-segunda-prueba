@@ -1,0 +1,44 @@
+services:
+  ep02-db:
+    build: ./database
+    environment:
+      POSTGRES_DB: ep02
+      POSTGRES_USER: ep02_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Crea .env con POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U ep02_user -d ep02']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    mem_limit: 256m
+    cpus: 0.5
+    restart: unless-stopped
+  ep02-backend:
+    build: ./backend
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:postgresql://ep02-db:5432/ep02
+      DB_USERNAME: ep02_user
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?Crea .env con POSTGRES_PASSWORD}
+    depends_on:
+      ep02-db:
+        condition: service_healthy
+    mem_limit: 512m
+    cpus: 0.5
+    restart: unless-stopped
+  ep02-frontend:
+    build: ./frontend
+    environment:
+      BACKEND_HOST: ep02-backend
+    ports:
+      - '127.0.0.1:${FRONTEND_PORT:-8081}:8080'
+    depends_on:
+      ep02-backend:
+        condition: service_healthy
+    mem_limit: 128m
+    cpus: 0.25
+    restart: unless-stopped
+volumes:
+  pgdata:

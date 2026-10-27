@@ -1,0 +1,102 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ep02-gp3
+provisioner: ebs.csi.aws.com
+parameters:
+  type: gp3
+  encrypted: "true"
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Retain
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: database-data
+  namespace: ${NAMESPACE}
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: ep02-gp3
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ep02-database
+  namespace: ${NAMESPACE}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: ep02-database
+  template:
+    metadata:
+      labels:
+        app: ep02-database
+    spec:
+      securityContext:
+        fsGroup: 70
+        runAsUser: 70
+        runAsGroup: 70
+        runAsNonRoot: true
+      containers:
+        - name: database
+          image: ${ECR_REGISTRY}/ep02-database:${IMAGE_TAG}
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: ep02
+            - name: POSTGRES_USER
+              value: ep02_user
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: database-secret
+                  key: POSTGRES_PASSWORD
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          readinessProbe:
+            exec:
+              command: [pg_isready, -U, ep02_user, -d, ep02]
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command: [pg_isready, -U, ep02_user, -d, ep02]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: database-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ep02-database
+  namespace: ${NAMESPACE}
+spec:
+  selector:
+    app: ep02-database
+  ports:
+    - port: 5432
+      targetPort: 5432

@@ -1,0 +1,103 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: EP2 DevOps - EKS y ECR para AWS Academy Learner Lab
+Parameters:
+  ClusterName:
+    Type: String
+    Default: ep02-devops
+  KubernetesVersion:
+    Type: String
+    Default: '1.35'
+  LabRoleArn:
+    Type: String
+  SubnetA:
+    Type: AWS::EC2::Subnet::Id
+  SubnetB:
+    Type: AWS::EC2::Subnet::Id
+Resources:
+  Cluster:
+    Type: AWS::EKS::Cluster
+    Properties:
+      Name: !Ref ClusterName
+      Version: !Ref KubernetesVersion
+      RoleArn: !Ref LabRoleArn
+      AccessConfig:
+        AuthenticationMode: API_AND_CONFIG_MAP
+        BootstrapClusterCreatorAdminPermissions: true
+      ResourcesVpcConfig:
+        EndpointPublicAccess: true
+        EndpointPrivateAccess: true
+        SubnetIds: [!Ref SubnetA, !Ref SubnetB]
+      Tags:
+        - Key: Project
+          Value: ep02-devops
+  Nodes:
+    Type: AWS::EKS::Nodegroup
+    Properties:
+      ClusterName: !Ref Cluster
+      NodegroupName: ep02-nodes
+      NodeRole: !Ref LabRoleArn
+      AmiType: AL2023_x86_64_STANDARD
+      CapacityType: ON_DEMAND
+      InstanceTypes: [t3.medium]
+      DiskSize: 20
+      ScalingConfig:
+        DesiredSize: 1
+        MinSize: 1
+        MaxSize: 2
+      Subnets: [!Ref SubnetA, !Ref SubnetB]
+      Tags:
+        Project: ep02-devops
+  VpcCni:
+    Type: AWS::EKS::Addon
+    DependsOn: Nodes
+    Properties:
+      ClusterName: !Ref Cluster
+      AddonName: vpc-cni
+      ConfigurationValues: '{"enableNetworkPolicy":"true"}'
+      ResolveConflicts: OVERWRITE
+  EbsCsi:
+    Type: AWS::EKS::Addon
+    DependsOn: Nodes
+    Properties:
+      ClusterName: !Ref Cluster
+      AddonName: aws-ebs-csi-driver
+      ResolveConflicts: OVERWRITE
+  MetricsServer:
+    Type: AWS::EKS::Addon
+    DependsOn: Nodes
+    Properties:
+      ClusterName: !Ref Cluster
+      AddonName: metrics-server
+      ResolveConflicts: OVERWRITE
+  DatabaseRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: ep02-database
+      ImageTagMutability: IMMUTABLE
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      LifecyclePolicy:
+        LifecyclePolicyText: '{"rules":[{"rulePriority":1,"description":"Conservar diez imagenes","selection":{"tagStatus":"any","countType":"imageCountMoreThan","countNumber":10},"action":{"type":"expire"}}]}'
+  BackendRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: ep02-backend
+      ImageTagMutability: IMMUTABLE
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      LifecyclePolicy:
+        LifecyclePolicyText: '{"rules":[{"rulePriority":1,"description":"Conservar diez imagenes","selection":{"tagStatus":"any","countType":"imageCountMoreThan","countNumber":10},"action":{"type":"expire"}}]}'
+  FrontendRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: ep02-frontend
+      ImageTagMutability: IMMUTABLE
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      LifecyclePolicy:
+        LifecyclePolicyText: '{"rules":[{"rulePriority":1,"description":"Conservar diez imagenes","selection":{"tagStatus":"any","countType":"imageCountMoreThan","countNumber":10},"action":{"type":"expire"}}]}'
+Outputs:
+  ClusterName:
+    Value: !Ref Cluster
+  Region:
+    Value: !Ref AWS::Region

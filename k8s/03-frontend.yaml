@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ep02-frontend
+  namespace: ${NAMESPACE}
+spec:
+  replicas: 2
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: ep02-frontend
+  template:
+    metadata:
+      labels:
+        app: ep02-frontend
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: frontend
+          image: ${ECR_REGISTRY}/ep02-frontend:${IMAGE_TAG}
+          ports:
+            - containerPort: 8080
+          env:
+            - name: BACKEND_HOST
+              value: ep02-backend.${NAMESPACE}.svc.cluster.local
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 15
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ep02-frontend
+  namespace: ${NAMESPACE}
+spec:
+  type: ClusterIP
+  selector:
+    app: ep02-frontend
+  ports:
+    - port: 80
+      targetPort: 8080

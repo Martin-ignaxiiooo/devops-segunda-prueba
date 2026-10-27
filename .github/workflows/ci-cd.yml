@@ -1,0 +1,221 @@
+name: CI/CD AWS Learner Lab
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ep2-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  backend:
+    name: Backend - JUnit y cobertura
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - run: chmod +x gradlew
+      - run: ./gradlew test jacocoTestCoverageVerification --no-daemon
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-tests
+          path: |
+            backend/build/reports/tests/
+            backend/build/reports/jacoco/
+            backend/build/test-results/
+            backend/build/classes/java/main/
+  frontend:
+    name: Frontend - Vitest y cobertura
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run test:coverage
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-coverage
+          path: frontend/coverage/
+  security:
+    name: SonarQube - analisis de codigo y bloqueo
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      sonarqube:
+        image: sonarqube:community
+        env:
+          SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: 'true'
+        ports:
+          - 9000:9000
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          name: backend-tests
+          path: backend/build
+      - uses: actions/download-artifact@v4
+        with:
+          name: frontend-coverage
+          path: frontend/coverage
+      - name: Configurar SonarQube temporal y puerta de calidad
+        run: python3 scripts/prepare-sonarqube.py
+      - uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_HOST_URL: http://localhost:9000
+          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+      - name: Conservar informe de analisis
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sonarqube-analysis
+          path: .scannerwork/report-task.txt
+          if-no-files-found: ignore
+  containers:
+    name: Imagen y Trivy - ${{ matrix.component }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        component: [database, backend, frontend]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./${{ matrix.component }}
+          load: true
+          tags: ep02-${{ matrix.component }}:${{ github.sha }}
+          cache-from: type=gha,scope=${{ matrix.component }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.component }}
+      - name: Escanear imagen - HIGH y CRITICAL corregibles
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ep02-${{ matrix.component }}:${{ github.sha }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+          format: table
+          output: trivy-${{ matrix.component }}.txt
+      - name: Prueba funcional de PostgreSQL
+        if: matrix.component == 'database'
+        run: |
+          set -euo pipefail
+          docker run -d --name db-test -e POSTGRES_DB=ep02 -e POSTGRES_USER=ep02_user -e POSTGRES_PASSWORD="$(openssl rand -hex 24)" "ep02-database:$GITHUB_SHA"
+          for attempt in $(seq 1 30); do
+            if docker exec db-test pg_isready -U ep02_user -d ep02; then break; fi
+            sleep 2
+          done
+          count=$(docker exec db-test psql -U ep02_user -d ep02 -tAc 'SELECT count(*) FROM ep02')
+          test "$count" -ge 1
+          docker rm -f db-test
+      - name: Guardar la imagen verificada
+        run: docker save "ep02-${{ matrix.component }}:$GITHUB_SHA" -o /tmp/image.tar
+      - uses: actions/upload-artifact@v4
+        with:
+          name: image-${{ matrix.component }}
+          path: /tmp/image.tar
+          retention-days: 2
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: trivy-${{ matrix.component }}
+          path: trivy-${{ matrix.component }}.txt
+  deploy:
+    name: Publicar ECR y desplegar EKS
+    needs: [backend, frontend, security, containers]
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment: learner-lab
+    env:
+      AWS_REGION: us-east-1
+      EKS_CLUSTER_NAME: ${{ vars.EKS_CLUSTER_NAME }}
+      NAMESPACE: ep02
+      DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      IMAGE_TAG: ${{ github.sha }}-${{ github.run_number }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validar configuracion
+        run: |
+          test -n "$EKS_CLUSTER_NAME" || { echo '::error::Falta la variable EKS_CLUSTER_NAME'; exit 1; }
+          test -n "$DB_PASSWORD" || { echo '::error::Falta el secreto DB_PASSWORD'; exit 1; }
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - uses: aws-actions/amazon-ecr-login@v2
+        id: ecr
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: image-*
+          path: /tmp/images
+      - name: Publicar exactamente las imagenes verificadas
+        env:
+          ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          set -euo pipefail
+          for component in database backend frontend; do
+            docker load -i "/tmp/images/image-$component/image.tar"
+            image="$ECR_REGISTRY/ep02-$component:$IMAGE_TAG"
+            docker tag "ep02-$component:$GITHUB_SHA" "$image"
+            docker push "$image"
+          done
+          echo "ECR_REGISTRY=$ECR_REGISTRY" >> "$GITHUB_ENV"
+      - name: Configurar kubectl para la version del cluster
+        run: |
+          set -euo pipefail
+          version=$(aws eks describe-cluster --name "$EKS_CLUSTER_NAME" --query 'cluster.version' --output text)
+          patch=$(curl --fail --silent --show-error "https://dl.k8s.io/release/stable-$version.txt")
+          curl --fail --silent --show-error --location "https://dl.k8s.io/release/$patch/bin/linux/amd64/kubectl" -o kubectl
+          curl --fail --silent --show-error --location "https://dl.k8s.io/release/$patch/bin/linux/amd64/kubectl.sha256" -o kubectl.sha256
+          echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
+          sudo install -m 0755 kubectl /usr/local/bin/kubectl
+          aws eks update-kubeconfig --name "$EKS_CLUSTER_NAME" --region "$AWS_REGION"
+      - name: Aplicar y comprobar despliegue
+        run: bash scripts/deploy.sh
+      - name: Evidencia de trazabilidad
+        run: |
+          mkdir -p evidence
+          printf 'commit=%s\nrun=%s\ncluster=%s\n' "$GITHUB_SHA" "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" "$EKS_CLUSTER_NAME" > evidence/deploy.txt
+          kubectl get deployments,pods,services,hpa -n "$NAMESPACE" -o wide > evidence/kubernetes.txt
+          cat evidence/deploy.txt >> "$GITHUB_STEP_SUMMARY"
+      - name: Diagnostico si falla
+        if: failure()
+        run: |
+          kubectl get events -n "$NAMESPACE" --sort-by=.lastTimestamp || true
+          kubectl get pods -n "$NAMESPACE" -o wide || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: deploy-evidence
+          path: evidence/
+          if-no-files-found: ignore
