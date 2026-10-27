@@ -1,66 +1,51 @@
-# EP2 - Ingeniería DevOps (DOY0101)
+# EP2 - Ingeniería DevOps (DOY0101): Empresas
 
 ![CI/CD AWS](https://github.com/Martin-ignaxiiooo/devops-segunda-prueba/actions/workflows/ci-cd.yml/badge.svg?branch=main)
 
-Repositorio de entrega: https://github.com/Martin-ignaxiiooo/devops-segunda-prueba
+## Continuidad con EP1
 
-Aplicación base: Gestor de Alumnos del [laboratorio del profesor](https://github.com/mauriciovelasquezduoc/202602Devops01/). Utiliza Spring Boot 4 / Gradle / Java 21, React / Vite y PostgreSQL 16. Los datos iniciales son ejemplos del laboratorio.
+Esta EP2 automatiza el microservicio **Empresas** desarrollado en [empresas-svc](https://github.com/Martin-ignaxiiooo/empresas-svc), commit [`c3d15ac`](https://github.com/Martin-ignaxiiooo/empresas-svc/tree/c3d15ac9aebdd0522828e05e58c2b2625dda2d76/ms/empresas). El usuario confirmó que corresponde a su EP1.
 
-## Estado y evidencias
+Se conservaron sin cambios cinco archivos Java originales del dominio, repositorio, servicio, arranque y OpenAPI. El controlador se adaptó para recibir un DTO con `nombre`, `industria` y `plan`, evitando asignar el ID persistente desde una petición. [ep1-origin.json](ep1-origin.json) registra sus huellas SHA256 con saltos de línea LF. El empaquetado original Maven/Spring Boot 3.3 se integró en el pipeline Gradle/Spring Boot 4.0.9. Las pruebas de EP1 se portaron a las APIs de prueba actuales; se corrigió su codificación UTF8 y una comprobación BDD que comparaba un valor constante en lugar del estado HTTP recibido.
 
-Aplicación desplegada en AWS Academy Learner Lab:
+La aplicación anterior de Alumnos se conserva en el historial y en las etiquetas `v1.0.0` y `v1.0.1`. Sus conteos y evidencias no se presentan como resultados de Empresas.
 
-**http://ac4ea9fb00ed74430bff6c139b708c3e-1588630464.us-east-1.elb.amazonaws.com**
+## Aplicación y API
 
-La [primera ejecución completa aprobada](https://github.com/Martin-ignaxiiooo/devops-segunda-prueba/actions/runs/40450427650) construyó, verificó, publicó y desplegó las tres imágenes. La [página del workflow](https://github.com/Martin-ignaxiiooo/devops-segunda-prueba/actions/workflows/ci-cd.yml) muestra las ejecuciones posteriores y sus artefactos.
+Aplicación AWS Academy: **http://ac4ea9fb00ed74430bff6c139b708c3e-1588630464.us-east-1.elb.amazonaws.com**
 
-Resultados comprobados el 27 de octubre de 2026:
+La interfaz React administra empresas con `nombre` obligatorio, `industria` y `plan` opcionales. El backend utiliza Java 21, Spring Boot, JPA y Bean Validation. PostgreSQL 16 conserva los datos en un volumen EBS; H2 se utiliza en pruebas.
 
-- Backend: 36 pruebas (incluidos ocho escenarios BDD y tres controles negativos CSRF); JaCoCo supera los umbrales de 80%.
-- Frontend: 73 pruebas aprobadas y cobertura de líneas de 100%.
-- SonarQube: puerta de calidad aprobada, cobertura global de 98,1%, cero bugs y cero vulnerabilidades en esa ejecución.
-- Trivy: las tres imágenes aprobaron el umbral HIGH/CRITICAL con corrección disponible.
-- Kubernetes: frontend 2/2, backend 2/2, PostgreSQL 1/1, PVC EBS Bound y métricas de CPU disponibles para el HPA.
-- Verificación funcional en AWS: creación y edición desde la interfaz; importación, exportación CSV y eliminación de un registro temporal mediante la API.
+| Método | Ruta | Respuesta correcta |
+|---|---|---|
+| GET | `/api/empresas` | 200, lista |
+| GET | `/api/empresas/{id}` | 200 o 404 |
+| POST | `/api/empresas` | 201; nombre inválido: 400 |
+| PUT | `/api/empresas/{id}` | 200 o 404 |
+| DELETE | `/api/empresas/{id}` | 204 o 404 |
 
-La [ejecución inicial bloqueada](https://github.com/Martin-ignaxiiooo/devops-segunda-prueba/actions/runs/40447441479) conserva evidencia de que los hallazgos de seguridad impidieron desplegar. Las correcciones se integraron mediante el [Pull Request 20](https://github.com/Martin-ignaxiiooo/devops-segunda-prueba/pull/20).
+La especificación se obtiene en `/v3/api-docs`; Swagger UI está disponible en `/swagger-ui/index.html`. La API mantiene CSRF habilitado. Un GET emite la cookie `XSRF-TOKEN`; las escrituras deben conservarla y enviar el encabezado `X-XSRF-TOKEN`. Axios lo hace desde el mismo origen. Solicitudes sin token o con uno inválido reciben 403.
 
-El entorno es un laboratorio con datos ficticios, HTTP y una sesión temporal de AWS Academy. La disponibilidad depende de mantener activo el Learner Lab.
+## Ejecución y estructura
 
-## Estructura
+- `backend/`: código y pruebas de Empresas de EP1, con configuración de seguridad y salud.
+- `frontend/`: interfaz React para el contrato original de Empresas.
+- `database/`: PostgreSQL y esquema `empresas`; un volumen nuevo comienza vacío.
+- `.github/workflows/`: CI/CD y publicación del grafo Gradle para Dependabot.
+- `infra/`: EKS/ECR; `k8s/`: despliegues, PVC, servicios, HPA y políticas.
+- `scripts/`: bootstrap AWS, análisis y despliegue comprobado.
 
-- `backend/`: API CRUD y CSV, pruebas JUnit, Mockito e integración.
-- `frontend/`: interfaz React y 73 pruebas Vitest.
-- `database/`: imagen PostgreSQL y datos de ejemplo.
-- `.github/workflows/ci-cd.yml`: integración y despliegue en un único repositorio.
-- `.github/dependabot.yml`: actualizaciones Gradle, npm, Docker y Actions.
-- `infra/eks.yaml`: recursos AWS EKS y ECR.
-- `k8s/`: despliegues, servicios, almacenamiento, escalado y políticas de red.
-- `scripts/`: inspección de AWS, renderizado y verificación del despliegue.
-
-## Ejecución local
-
-Requisitos: Docker Desktop operativo. Copia `.env.example` a `.env` y configura una contraseña local distinta de la usada en AWS.
+Con Docker Desktop operativo, copia `.env.example` a `.env`, configura una contraseña local y ejecuta:
 
 ```sh
 docker compose up --build --wait
 ```
 
-La interfaz queda en http://localhost:8081. PostgreSQL y la API se acceden dentro de la red de Compose; el proxy del frontend expone `/ep02`.
+La interfaz queda en http://localhost:8081. `docker compose down` detiene los servicios y conserva el volumen. La base de datos y el backend utilizan la red interna.
 
-```sh
-docker compose down
-```
+## Contenedores
 
-El volumen de datos se conserva al detener Compose.
-
-## Construcción de contenedores
-
-El Dockerfile del backend compila el JAR con Gradle y JDK 21 en una primera etapa. La imagen final copia únicamente el JAR y utiliza JRE 21 Alpine; Gradle, el JDK y las fuentes quedan en la etapa de construcción. El proceso Java utiliza UID 10001, un máximo de heap de 256 MiB y un healthcheck del endpoint de Actuator. Las pruebas se ejecutan en el job de CI antes del despliegue.
-
-El frontend instala exactamente el lockfile con `npm ci` y genera los archivos estáticos con Node 22. La etapa final contiene Nginx sin privilegios y `dist/`; no contiene Node ni `node_modules`. Nginx utiliza UID 101, escucha en 8080 y resuelve el backend mediante el DNS del entorno.
-
-PostgreSQL utiliza la imagen oficial 16 Alpine y UID 70. Elimina el ejecutable `gosu`, innecesario al iniciar directamente sin root. El SQL inicial se aplica solo a un volumen nuevo. Los archivos `.dockerignore` excluyen dependencias locales, reportes y productos de compilación de los contextos de build.
+El backend se compila con JDK 21 y Gradle en una etapa de build. La imagen final contiene el JAR y JRE 21 Alpine, utiliza UID 10001 y comprueba Actuator. El frontend se compila con Node 22 y su lockfile; la etapa final contiene archivos estáticos y Nginx con UID 101. PostgreSQL utiliza UID 70. Los tres Dockerfiles definen healthchecks y los contextos excluyen dependencias y productos locales.
 
 ## Pipeline y trazabilidad
 
@@ -76,25 +61,23 @@ flowchart LR
   S --> G
   I --> G
   G -->|main| E[Publicar imágenes verificadas en ECR]
-  E --> K[Despliegue EKS y comprobación HTTP]
+  E --> K[Desplegar EKS y comprobar HTTP]
 ```
 
-El SHA completo del commit, número de ejecución e intento identifican las tres imágenes. Cada intento utiliza una etiqueta distinta para permitir reintentos con ECR inmutable. CI guarda la imagen que pasó Trivy y deploy publica ese mismo archivo, sin reconstruirlo. ECR utiliza etiquetas inmutables. Los deployments incorporan la anotación `ep02.duoc/commit`; los artefactos de Actions registran el commit, la ejecución y los recursos desplegados.
+Los PR ejecutan todos los controles. Solo `main` despliega, después de que pasen pruebas, cobertura y seguridad. El [workflow](https://github.com/Martin-ignaxiiooo/devops-segunda-prueba/actions/workflows/ci-cd.yml) conserva las ejecuciones y sus artefactos. Los seis controles de calidad son obligatorios para integrar en `main`.
 
-Los pull requests ejecutan controles y no despliegan. Un fallo en pruebas, cobertura, SonarQube o Trivy impide el job de despliegue. La rama de integración es `main`.
+Las imágenes se guardan después de Trivy y se publican en ECR sin reconstruirse. Su etiqueta incorpora SHA completo, número de ejecución e intento; ECR no permite sobrescribir etiquetas. Kubernetes registra `ep02.duoc/commit` y `deploy-evidence` registra SHA, ejecución, clúster y URL. El pipeline verifica la interfaz y consulta Empresas tanto por el servicio como por el balanceador público.
 
-## Pruebas y cobertura
+## Pruebas y políticas de calidad
 
-Backend (Java 21):
+Pruebas incluidas: **24 backend** (JUnit/Mockito y tres escenarios BDD) y **32 frontend**. Cubren el ciclo de vida de Empresas, campos opcionales, validación del nombre, 404, errores de interfaz y CSRF. Los resultados de cada ejecución están en sus artefactos; el badge corresponde a `main`.
 
 ```sh
 cd backend
 ./gradlew test jacocoTestCoverageVerification --no-daemon
 ```
 
-JaCoCo exige al menos 80% de instrucciones y 80% de ramas. En Windows se utiliza `gradlew.bat`.
-
-Frontend (Node 22):
+En Windows utiliza `gradlew.bat`, con Java 21. Se conserva el requisito de EP1 de **100% de líneas**, excluyendo únicamente `*Application`, como en su `pom.xml`. El reporte y el control utilizan esa misma selección. También se exigen al menos 80% de instrucciones y ramas.
 
 ```sh
 cd frontend
@@ -104,19 +87,17 @@ npm run test:coverage
 npm run build
 ```
 
-Vitest exige al menos 90% de líneas, ramas, funciones y sentencias. Los reportes locales están en `backend/build/reports/` y `frontend/coverage/`; CI los publica como artefactos.
+Vitest exige al menos 90% en líneas, ramas, funciones y sentencias. CI publica los reportes HTML/XML y LCOV.
 
-## Seguridad
+## Seguridad y bloqueo
 
-Dependabot revisa dependencias y acciones semanalmente, con actualizaciones agrupadas. El grafo Gradle se publica desde el workflow de dependencias; npm también se audita en cada ejecución de CI, incluyendo dependencias de desarrollo. Un SonarQube temporal en el runner analiza Java y JavaScript. Su puerta de calidad bloquea bugs, vulnerabilidades y cobertura global inferior al 80%. `sonar.qualitygate.wait=true` obliga a esperar el resultado y transmite el fallo al pipeline. El servidor y su token de analisis solo viven durante ese job, y no requieren una cuenta externa. El administrador temporal cambia su clave inicial por una clave aleatoria antes de analizar.
+Dependabot revisa Gradle, npm, Docker y Actions. El grafo Gradle se publica en cada cambio del backend; `npm audit --audit-level=high` se ejecuta también sobre dependencias de desarrollo. Las propuestas de actualización se agrupan y deben aprobar los mismos controles antes de integrarse.
 
-Trivy inspecciona las tres imágenes y bloquea hallazgos HIGH o CRITICAL con corrección disponible. Los hallazgos sin corrección quedan fuera de ese umbral; esto no equivale a afirmar que una imagen no tiene vulnerabilidades.
+Un SonarQube temporal analiza Java y JavaScript con bibliotecas y bytecode. Su puerta exige cobertura global de al menos 80%, cero bugs y cero vulnerabilidades. `sonar.qualitygate.wait=true` espera el resultado y propaga los fallos; no necesita una cuenta Snyk. Los reportes se exportan antes de apagar el servidor y su token temporal no se conserva.
 
-No se guardan credenciales en Git. `.env`, `.local/`, `.tools/` y `secrets.txt` están excluidos. La clave de PostgreSQL se inyecta como Secret de Kubernetes. Backend y frontend utilizan usuarios sin privilegios; las políticas de red restringen el ingreso hacia base de datos y backend. Su aplicación requiere el soporte de NetworkPolicy del CNI, configurado en la infraestructura.
+Trivy bloquea vulnerabilidades HIGH o CRITICAL con corrección disponible en las tres imágenes. Ese umbral no equivale a ausencia de todos los hallazgos. La [ejecución bloqueada de seguridad](https://github.com/Martin-ignaxiiooo/devops-segunda-prueba/actions/runs/40447441479) se conserva como prueba histórica del bloqueo del pipeline, anterior a la adaptación de Empresas.
 
-Spring Security mantiene CSRF habilitado para la SPA: el GET inicial emite la cookie `XSRF-TOKEN` y Axios la envía como `X-XSRF-TOKEN` en las escrituras. Las solicitudes sin token o con uno inválido reciben HTTP 403. Los clientes de API deben obtener primero la cookie con un GET y conservarla al enviar el encabezado.
-
-La API del ejemplo no implementa autenticación de usuarios: utiliza solo datos ficticios y mantenla dentro del alcance del laboratorio.
+Las credenciales se inyectan con GitHub Secrets y Kubernetes Secrets. `.local/`, `.tools/`, `.env` y `secrets.txt` están excluidos de Git. Las políticas de red permiten frontend a backend y backend a PostgreSQL. Las aplicaciones tienen límites de recursos y procesos sin privilegios. La API es una demostración con datos ficticios, HTTP y sin autenticación de usuarios; la disponibilidad pública depende de la sesión del Learner Lab.
 
 ## AWS Academy Learner Lab
 
@@ -167,7 +148,7 @@ Abre http://localhost:8081. El pipeline comprueba HTTP y la consulta de alumnos 
 
 ## Orquestación y datos
 
-PostgreSQL mantiene una réplica y un volumen EBS gp3 de 2 GiB. Su política de recuperación `Retain` conserva el volumen ante la eliminación del PVC; debe inventariarse al limpiar el laboratorio porque sigue consumiendo almacenamiento.
+PostgreSQL almacena la tabla `empresas` y mantiene una réplica y un volumen EBS gp3 de 2 GiB. Su política de recuperación `Retain` conserva el volumen ante la eliminación del PVC; debe inventariarse al limpiar el laboratorio porque sigue consumiendo almacenamiento.
 
 El backend inicia con dos réplicas y un HPA de dos a tres, al 70% de CPU. El frontend inicia con dos réplicas. Todos tienen límites de memoria y CPU, sondas de salud y reinicio gestionado por Kubernetes. El clúster inicia con un nodo; el máximo de dos del nodegroup es un límite de tamaño, no un autoscaler de nodos. El HPA requiere Metrics Server. La persistencia requiere EBS CSI. El parche `infra/ebs-csi-lab-patch.json` configura una réplica del controlador EBS en la red del nodo, para que utilice el rol EC2 `LabRole` en este laboratorio sin crear roles IAM. Se limita al componente de almacenamiento; las aplicaciones conservan la red normal de pods. El pipeline aplica y comprueba este ajuste antes del despliegue.
 
@@ -175,22 +156,29 @@ EKS y el almacenamiento pueden generar cargos aunque la sesión del laboratorio 
 
 ## Evidencias de evaluación
 
-| Indicador | Archivos | Evidencia disponible |
-|---|---|---|
-| IE1 | Dockerfiles y `.dockerignore` | Tres builds y escaneos de imagen aprobados; usuarios sin privilegios |
-| IE2 | Pruebas backend y frontend | 36 pruebas backend y 73 frontend, con cobertura y controles CSRF |
-| IE3 | Dependabot, SonarQube, Trivy, límites y políticas | Puerta de calidad aprobada y ejecución bloqueada conservada como evidencia |
-| IE4 | Pipeline, imágenes SHA y script deploy | Despliegue EKS aprobado, URL pública y artefactos de trazabilidad |
-| IE5 | `k8s/`, PVC, probes, HPA | Rollouts correctos, cinco pods de aplicación y volumen persistente Bound |
+| Indicador | Evidencia |
+|---|---|
+| IE1 | Tres Dockerfiles, builds y reportes Trivy |
+| IE2 | Pruebas de Empresas de EP1, controles JaCoCo/Vitest y reportes CI |
+| IE3 | Dependabot, SonarQube, Trivy, CSRF, Secret, límites y HPA |
+| IE4 | Pipeline ECR/EKS, etiquetas SHA, anotaciones y `deploy-evidence` |
+| IE5 | Kubernetes, réplicas, probes, PVC y métricas del HPA |
+
+Las verificaciones funcionales y de escalado se conservan como evidencias de la versión correspondiente. No se atribuyen a Empresas las capturas antiguas de Alumnos.
 
 ## Uso de IA
 
-Se utilizó Codex de OpenAI como apoyo para revisar la pauta, adaptar la aplicación del laboratorio a este repositorio, preparar configuraciones de CI/CD y analizar resultados de pruebas. El equipo debe revisar y validar el contenido y registrar el uso final de IA conforme a la [orientación de Duoc](https://bibliotecas.duoc.cl/ia).
+Se utilizó Codex de OpenAI como apoyo para adaptar el pipeline, actualizar dependencias, portar pruebas y preparar la interfaz de Empresas. El equipo debe revisar y validar el contenido, así como declarar y citar el uso final conforme a la [orientación de Duoc](https://bibliotecas.duoc.cl/ia).
 
 ## Integrantes
 
-Completar los nombres de ambos integrantes antes de entregar.
+Integrantes identificados en el repositorio de EP1:
 
-## Conclusiones y reflexión de cada integrante
+- Martin Peña
+- Benjamin Yantzen
 
-Pendiente: cada integrante debe escribir su propia reflexión sobre aprendizaje y contribución, sin apoyo de IA, además de las conclusiones y justificaciones técnicas que la pauta reserva al equipo. Este apartado no se completa automáticamente.
+El equipo debe confirmar que la pareja de EP2 es la misma.
+
+## Conclusiones, justificaciones y reflexiones individuales
+
+Pendiente: cada integrante debe redactar personalmente sus conclusiones, justificaciones técnicas y reflexión sobre aprendizaje y contribución, sin apoyo de IA, conforme a la pauta. No se reutilizan automáticamente las reflexiones de EP1.

@@ -1,30 +1,16 @@
 import { http, HttpResponse } from 'msw'
-
-export const ALUMNOS = [
-  { id: 1, nombre: 'Juan', apellido: 'Pérez' },
-  { id: 2, nombre: 'Ana', apellido: 'López' },
-  { id: 3, nombre: 'Carlos', apellido: 'Soto' }
+export const EMPRESAS = [
+  { id: 1, nombre: 'WorkMatch Demo', industria: 'Tecnología', plan: 'Básico' },
+  { id: 2, nombre: 'Comercio Demo', industria: 'Comercio', plan: 'Pro' },
+  { id: 3, nombre: 'Servicios Demo', industria: null, plan: null }
 ]
-
-// Usar rutas relativas para que coincidan con la API del frontend
-// El frontend usa axios.create({ baseURL: '/ep02' })
 export const handlers = [
-  http.get('/ep02', () => HttpResponse.json(ALUMNOS)),
-  http.post('/ep02', async ({ request }) => {
-    const body = await request.json()
-    return HttpResponse.json({ id: 99, ...body }, { status: 200 })
-  }),
-  http.put('/ep02/:id', async ({ params, request }) => {
-    const body = await request.json()
-    return HttpResponse.json({ id: Number(params.id), ...body })
-  }),
-  http.delete('/ep02/:id', () => new HttpResponse(null, { status: 200 })),
-  http.get(
-    '/ep02/export',
-    () =>
-      new HttpResponse('Juan,Pérez\nAna,López', {
-        headers: { 'Content-Type': 'text/plain' }
-      })
+  http.get('/api/empresas', () => HttpResponse.json(EMPRESAS)),
+  http.post('/api/empresas', async ({ request }) =>
+    HttpResponse.json({ id: 99, ...(await request.json()) }, { status: 201 })
   ),
-  http.post('/ep02/import', () => new HttpResponse(null, { status: 200 }))
+  http.put('/api/empresas/:id', async ({ params, request }) =>
+    HttpResponse.json({ id: Number(params.id), ...(await request.json()) })
+  ),
+  http.delete('/api/empresas/:id', () => new HttpResponse(null, { status: 204 }))
 ]

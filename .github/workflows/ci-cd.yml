@@ -148,7 +148,8 @@ jobs:
             if docker exec db-test pg_isready -U ep02_user -d ep02; then break; fi
             sleep 2
           done
-          count=$(docker exec db-test psql -U ep02_user -d ep02 -tAc 'SELECT count(*) FROM ep02')
+          docker exec db-test psql -U ep02_user -d ep02 -v ON_ERROR_STOP=1 -c "INSERT INTO empresas(nombre, industria, plan) VALUES ('Prueba CI', 'Tecnologia', 'Demo')"
+          count=$(docker exec db-test psql -U ep02_user -d ep02 -tAc 'SELECT count(*) FROM empresas')
           test "$count" -ge 1
           docker rm -f db-test
       - name: Guardar la imagen verificada
