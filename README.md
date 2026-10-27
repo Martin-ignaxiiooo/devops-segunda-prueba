@@ -144,7 +144,7 @@ aws eks update-kubeconfig --region us-east-1 --name ep02-devops
 kubectl port-forward -n ep02 service/ep02-frontend 8081:80
 ```
 
-Abre http://localhost:8081. El pipeline comprueba HTTP y la consulta de alumnos mediante este mismo servicio.
+Abre http://localhost:8081. La verificación del despliegue consulta `/api/empresas` mediante el proxy del frontend y el balanceador público, y comprueba una respuesta HTTP exitosa con una lista JSON de empresas.
 
 ## Orquestación y datos
 
