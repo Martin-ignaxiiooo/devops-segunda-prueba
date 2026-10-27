@@ -1,22 +1,7 @@
--- ============================================================
--- Inicialización de la base de datos: ep02
--- Alineado con AlumnoEntity.java (tabla: ep02)
--- ============================================================
-
--- Crear tabla principal
-CREATE TABLE IF NOT EXISTS ep02 (
-    id        BIGSERIAL    PRIMARY KEY,
-    nombre    VARCHAR(100) NOT NULL,
-    apellido  VARCHAR(100) NOT NULL
+-- Esquema del microservicio Empresas de EP1. Los registros se crean mediante la API.
+CREATE TABLE IF NOT EXISTS empresas (
+    id BIGSERIAL PRIMARY KEY,
+    nombre VARCHAR(255) NOT NULL,
+    industria VARCHAR(255),
+    plan VARCHAR(255)
 );
-
--- Datos de ejemplo para desarrollo
-INSERT INTO ep02 (nombre, apellido) VALUES
-    ('Juan',    'Pérez'),
-    ('Ana',     'López'),
-    ('Carlos',  'Soto'),
-    ('María',   'González'),
-    ('Pedro',   'Ramírez'),
-    ('Sofía',   'Muñoz'),
-    ('Diego',   'Torres'),
-    ('Valentina','Flores');

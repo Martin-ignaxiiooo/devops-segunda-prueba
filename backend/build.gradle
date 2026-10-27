@@ -31,14 +31,13 @@ dependencies {
     annotationProcessor platform('org.springframework.boot:spring-boot-dependencies:4.0.9')
 
     implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3'
     runtimeOnly 'org.postgresql:postgresql:42.7.12'
 
-    compileOnly 'org.projectlombok:lombok'
-    annotationProcessor 'org.projectlombok:lombok'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
@@ -70,6 +69,7 @@ jacoco {
 
 jacocoTestReport {
     dependsOn test
+    classDirectories.setFrom(files(classDirectories.files.collect { fileTree(dir: it, exclude: ['**/*Application.class']) }))
     reports {
         xml.required = true
         html.required = true
@@ -78,7 +78,15 @@ jacocoTestReport {
 
 jacocoTestCoverageVerification {
     dependsOn jacocoTestReport
+    classDirectories.setFrom(files(classDirectories.files.collect { fileTree(dir: it, exclude: ['**/*Application.class']) }))
     violationRules {
+        rule {
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 1.00
+            }
+        }
         rule {
             limit {
                 counter = 'INSTRUCTION'
@@ -104,3 +112,5 @@ tasks.register('sonarLibraries', Copy) {
     into layout.buildDirectory.dir('sonar-libraries')
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
+
+tasks.withType(JavaCompile).configureEach { options.encoding = "UTF-8" }

@@ -1,15 +1,10 @@
 import { useState } from 'react'
-import { useAlumnos } from './hooks/useAlumnos'
-import AlumnoForm from './components/AlumnoForm'
-import AlumnoTable from './components/AlumnoTable'
-import CsvPanel from './components/CsvPanel'
-
+import { useEmpresas } from './hooks/useEmpresas'
+import EmpresaForm from './components/EmpresaForm'
+import EmpresaTable from './components/EmpresaTable'
 export default function App() {
-  const { ep02, loading, error, success, crear, actualizar, eliminar, exportar, importar } =
-    useAlumnos()
-
+  const { empresas, loading, error, success, crear, actualizar, eliminar } = useEmpresas()
   const [editing, setEditing] = useState(null)
-
   const handleSubmit = async (form) => {
     if (editing) {
       const ok = await actualizar(editing.id, form)
@@ -18,67 +13,47 @@ export default function App() {
     }
     return crear(form)
   }
-
   return (
     <div className="app-wrapper">
-      {/* ── Header ── */}
       <header className="app-header">
-        <h1>🎓 Gestión de Alumnos</h1>
-        <p>Sistema CRUD — Spring Boot + PostgreSQL + React</p>
+        <h1>🏢 Gestión de Empresas</h1>
+        <p>WorkMatch · Registro de empresas</p>
       </header>
-
-      {/* ── Alertas ── */}
-      {error && <div className="alert alert-error">⚠️ {error}</div>}
-      {success && <div className="alert alert-success">✅ {success}</div>}
-
-      {/* ── Stats ── */}
+      {error && (
+        <div role="alert" className="alert alert-error">
+          {error}
+        </div>
+      )}
+      {success && (
+        <div role="status" className="alert alert-success">
+          {success}
+        </div>
+      )}
       <div className="stats-bar">
         <div className="stat-card">
-          <div className="stat-num">{ep02.length}</div>
-          <div className="stat-label">Total alumnos</div>
+          <div className="stat-num">{empresas.length}</div>
+          <div className="stat-label">Total empresas</div>
         </div>
         <div className="stat-card">
-          <div className="stat-num">{new Set(ep02.map((a) => a.apellido)).size}</div>
-          <div className="stat-label">Apellidos únicos</div>
+          <div className="stat-num">
+            {new Set(empresas.map((e) => e.industria).filter(Boolean)).size}
+          </div>
+          <div className="stat-label">Industrias</div>
         </div>
       </div>
-
-      {/* ── Formulario ── */}
-      <AlumnoForm editing={editing} onSubmit={handleSubmit} onCancel={() => setEditing(null)} />
-
-      {/* ── CSV ── */}
-      <CsvPanel onExport={exportar} onImport={importar} />
-
-      {/* ── Tabla ── */}
+      <EmpresaForm editing={editing} onSubmit={handleSubmit} onCancel={() => setEditing(null)} />
       <div className="card">
-        <div className="card-title">
-          📋 Lista de alumnos
-          {loading && (
-            <span style={{ fontSize: '.8rem', color: 'var(--text-muted)', marginLeft: 'auto' }}>
-              Cargando...
-            </span>
-          )}
-        </div>
-
+        <div className="card-title">Lista de empresas {loading && <span>Cargando...</span>}</div>
         {loading ? (
           <div className="spinner-wrap">
             <div className="spinner" />
           </div>
         ) : (
-          <AlumnoTable ep02={ep02} onEdit={setEditing} onDelete={eliminar} />
+          <EmpresaTable empresas={empresas} onEdit={setEditing} onDelete={eliminar} />
         )}
       </div>
-
-      {/* ── Footer ── */}
-      <footer
-        style={{
-          textAlign: 'center',
-          color: 'var(--text-muted)',
-          fontSize: '.8rem',
-          marginTop: '1rem'
-        }}
-      >
-        Laboratorio de Ingeniería DevOps
+      <footer className="app-footer">
+        Empresas · Ingeniería DevOps · <a href="/v3/api-docs">Especificación OpenAPI</a>
       </footer>
     </div>
   )

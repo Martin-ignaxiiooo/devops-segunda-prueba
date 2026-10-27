@@ -8,14 +8,22 @@ export default defineConfig({
     port: 3000,
     host: '0.0.0.0',
     proxy: {
-      '/ep02': {
+      '/v3/api-docs': {
+        target: process.env.VITE_API_URL || 'http://localhost:8080',
+        changeOrigin: true
+      },
+      '/swagger-ui': {
+        target: process.env.VITE_API_URL || 'http://localhost:8080',
+        changeOrigin: true
+      },
+      '/api/empresas': {
         target: process.env.VITE_API_URL || 'http://localhost:8080',
         changeOrigin: true
       }
     }
   },
 
-  // ── Vitest ────────────────────────────────────────────────────────────────
+  // â”€â”€ Vitest â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   test: {
     // Simula el DOM del navegador
     environment: 'jsdom',
@@ -26,7 +34,7 @@ export default defineConfig({
     // Hace disponibles describe/it/expect sin importar
     globals: true,
 
-    // ── Cobertura ──────────────────────────────────────────────────────────
+    // â”€â”€ Cobertura â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],
@@ -38,7 +46,7 @@ export default defineConfig({
       // Excluir archivos que no necesitan cobertura
       exclude: ['src/main.jsx', 'src/index.css', 'src/test/**'],
 
-      // ── UMBRALES: si no se alcanza el 90% el build FALLA ─────────────────
+      // â”€â”€ UMBRALES: si no se alcanza el 90% el build FALLA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       thresholds: {
         lines: 90,
         functions: 90,

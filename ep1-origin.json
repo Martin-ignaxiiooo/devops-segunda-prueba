@@ -1,0 +1,38 @@
+{
+  "repository": "https://github.com/Martin-ignaxiiooo/empresas-svc",
+  "commit": "c3d15ac9aebdd0522828e05e58c2b2625dda2d76",
+  "source_directory": "ms/empresas",
+  "import_directory": "backend",
+  "retained_main_java_files": [
+    {
+      "path": "cl/duoc/jv0101/caso01/empresas/config/OpenApiConfig.java",
+      "sha256_utf8_lf": "e4f32995e90ad352f6879df961e8e06df29e0bed710e0fc2c36d9a1d131450d3"
+    },
+    {
+      "path": "cl/duoc/jv0101/caso01/empresas/controller/EmpresaController.java",
+      "sha256_utf8_lf": "e6ba2989857bab914b881becb6ec4232eaac1dbb72c6b0f46cf205d579aa9a4b"
+    },
+    {
+      "path": "cl/duoc/jv0101/caso01/empresas/EmpresaApplication.java",
+      "sha256_utf8_lf": "f55f49bb8db5b1df57db72c1cbff8f22c77df933f451f3ea44e27ada87861721"
+    },
+    {
+      "path": "cl/duoc/jv0101/caso01/empresas/model/Empresa.java",
+      "sha256_utf8_lf": "7a81e415a27f9f8632994a0103f6a632f37853bb6ca3f7339db78e166f29b700"
+    },
+    {
+      "path": "cl/duoc/jv0101/caso01/empresas/repository/EmpresaRepository.java",
+      "sha256_utf8_lf": "c0b755f6b044a8d6fe1e2034064d2d66b5f4f992426ae9c6179f5d4389ac10cc"
+    },
+    {
+      "path": "cl/duoc/jv0101/caso01/empresas/service/EmpresaService.java",
+      "sha256_utf8_lf": "ae06c3913f45c528a1e3ca931374a8274b8e7c90490c057734baa7d09155b805"
+    }
+  ],
+  "adaptations": [
+    "Build integrado en Gradle con SpringBoot4 y dependencias corregidas",
+    "Pruebas EP1 portadas a SpringBoot4; UTF8 corregido y CSRF agregado",
+    "PostgreSQL persistente en AWS y H2 solo para pruebas",
+    "Interfaz React para contrato original /api/empresas"
+  ]
+}
