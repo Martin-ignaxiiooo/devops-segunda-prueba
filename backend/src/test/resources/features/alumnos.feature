@@ -42,3 +42,7 @@ Feature: Gestion de ep02
   Scenario: Importar ep02 desde CSV
     When importo el CSV "Pedro,Diaz\nSofia,Ruiz"
     Then la respuesta tiene codigo 200
+
+  Scenario: Rechazar escritura sin token CSRF
+    When intento crear un alumno sin token CSRF
+    Then la respuesta tiene codigo 403

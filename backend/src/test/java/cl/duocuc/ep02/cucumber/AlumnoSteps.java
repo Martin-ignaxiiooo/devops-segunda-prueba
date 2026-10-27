@@ -89,6 +89,12 @@ public class AlumnoSteps extends CucumberSpringConfiguration {
         }
     }
 
+    @When("intento crear un alumno sin token CSRF")
+    public void crearSinCsrf() {
+        lastResponse = restTemplate.postForEntity(
+                baseUrl(), new Alumno(null, "Prueba", "Sin token"), String.class);
+    }
+
     @When("actualizo el alumno con nombre {string} y apellido {string}")
     public void actualizoElAlumno(String nombre, String apellido) {
         assertNotNull(lastCreatedId, "Debe existir un alumno creado previamente");

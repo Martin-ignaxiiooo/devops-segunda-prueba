@@ -16,7 +16,7 @@ La [primera ejecución completa aprobada](https://github.com/Martin-ignaxiiooo/d
 
 Resultados comprobados el 27 de octubre de 2026:
 
-- Backend: 35 pruebas (incluidos siete escenarios BDD y dos controles negativos CSRF); JaCoCo supera los umbrales de 80%.
+- Backend: 36 pruebas (incluidos ocho escenarios BDD y tres controles negativos CSRF); JaCoCo supera los umbrales de 80%.
 - Frontend: 73 pruebas aprobadas y cobertura de líneas de 100%.
 - SonarQube: puerta de calidad aprobada, cobertura global de 98,1%, cero bugs y cero vulnerabilidades en esa ejecución.
 - Trivy: las tres imágenes aprobaron el umbral HIGH/CRITICAL con corrección disponible.
@@ -170,7 +170,7 @@ EKS y el almacenamiento pueden generar cargos aunque la sesión del laboratorio 
 | Indicador | Archivos | Comprobación pendiente o disponible |
 |---|---|---|
 | IE1 | Dockerfiles y `.dockerignore` | Tres builds y escaneos de imagen aprobados; usuarios sin privilegios |
-| IE2 | Pruebas backend y frontend | Pruebas backend y 73 frontend, con cobertura y controles CSRF |
+| IE2 | Pruebas backend y frontend | 36 pruebas backend y 73 frontend, con cobertura y controles CSRF |
 | IE3 | Dependabot, SonarQube, Trivy, límites y políticas | Puerta de calidad aprobada y ejecución bloqueada conservada como evidencia |
 | IE4 | Pipeline, imágenes SHA y script deploy | Despliegue EKS aprobado, URL pública y artefactos de trazabilidad |
 | IE5 | `k8s/`, PVC, probes, HPA | Rollouts correctos, cinco pods de aplicación y volumen persistente Bound |
