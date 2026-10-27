@@ -6,7 +6,7 @@
 
 Esta EP2 automatiza el microservicio **Empresas** desarrollado en [empresas-svc](https://github.com/Martin-ignaxiiooo/empresas-svc), commit [`c3d15ac`](https://github.com/Martin-ignaxiiooo/empresas-svc/tree/c3d15ac9aebdd0522828e05e58c2b2625dda2d76/ms/empresas). El usuario confirmó que corresponde a su EP1.
 
-Los seis archivos Java originales del dominio, controlador, repositorio, servicio, arranque y OpenAPI se conservaron. [ep1-origin.json](ep1-origin.json) registra sus huellas SHA256 con saltos de línea LF. El empaquetado original Maven/Spring Boot 3.3 se integró en el pipeline Gradle/Spring Boot 4.0.9. Las pruebas de EP1 se portaron a las APIs de prueba actuales; se corrigió su codificación UTF8 y una comprobación BDD que comparaba un valor constante en lugar del estado HTTP recibido.
+Se conservaron sin cambios cinco archivos Java originales del dominio, repositorio, servicio, arranque y OpenAPI. El controlador se adaptó para recibir un DTO con `nombre`, `industria` y `plan`, evitando asignar el ID persistente desde una petición. [ep1-origin.json](ep1-origin.json) registra sus huellas SHA256 con saltos de línea LF. El empaquetado original Maven/Spring Boot 3.3 se integró en el pipeline Gradle/Spring Boot 4.0.9. Las pruebas de EP1 se portaron a las APIs de prueba actuales; se corrigió su codificación UTF8 y una comprobación BDD que comparaba un valor constante en lugar del estado HTTP recibido.
 
 La aplicación anterior de Alumnos se conserva en el historial y en las etiquetas `v1.0.0` y `v1.0.1`. Sus conteos y evidencias no se presentan como resultados de Empresas.
 
@@ -70,7 +70,7 @@ Las imágenes se guardan después de Trivy y se publican en ECR sin reconstruirs
 
 ## Pruebas y políticas de calidad
 
-Pruebas incluidas: **23 backend** (JUnit/Mockito y tres escenarios BDD) y **32 frontend**. Cubren el ciclo de vida de Empresas, campos opcionales, validación del nombre, 404, errores de interfaz y CSRF. Los resultados de cada ejecución están en sus artefactos; el badge corresponde a `main`.
+Pruebas incluidas: **24 backend** (JUnit/Mockito y tres escenarios BDD) y **32 frontend**. Cubren el ciclo de vida de Empresas, campos opcionales, validación del nombre, 404, errores de interfaz y CSRF. Los resultados de cada ejecución están en sus artefactos; el badge corresponde a `main`.
 
 ```sh
 cd backend

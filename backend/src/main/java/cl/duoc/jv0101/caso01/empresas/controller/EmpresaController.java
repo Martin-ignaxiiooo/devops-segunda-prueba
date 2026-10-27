@@ -1,6 +1,7 @@
 package cl.duoc.jv0101.caso01.empresas.controller;
 
 import jakarta.validation.Valid;
+import cl.duoc.jv0101.caso01.empresas.dto.EmpresaRequest;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,14 +38,14 @@ public class EmpresaController {
     }
 
     @PostMapping
-    public ResponseEntity<Empresa> crear(@Valid @RequestBody Empresa recurso) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(recurso));
+    public ResponseEntity<Empresa> crear(@Valid @RequestBody EmpresaRequest recurso) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.create(toEntity(recurso)));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Empresa> actualizar(@PathVariable Long id,
-            @Valid @RequestBody Empresa datos) {
-        return service.update(id, datos).map(ResponseEntity::ok)
+            @Valid @RequestBody EmpresaRequest datos) {
+        return service.update(id, toEntity(datos)).map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
@@ -52,5 +53,13 @@ public class EmpresaController {
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         return service.delete(id) ? ResponseEntity.noContent().build()
                 : ResponseEntity.notFound().build();
+    }
+
+    private Empresa toEntity(EmpresaRequest input) {
+        Empresa empresa = new Empresa();
+        empresa.setNombre(input.nombre());
+        empresa.setIndustria(input.industria());
+        empresa.setPlan(input.plan());
+        return empresa;
     }
 }

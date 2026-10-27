@@ -14,6 +14,7 @@ import cl.duoc.jv0101.caso01.empresas.model.Empresa;
 import cl.duoc.jv0101.caso01.empresas.service.EmpresaService;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -149,5 +150,16 @@ class EmpresaControllerTest {
         mockMvc.perform(post("/api/empresas").with(csrfToken(false)).contentType(MediaType.APPLICATION_JSON).content("{\"nombre\":\"Prueba\"}"))
             .andExpect(status().isForbidden());
         verify(service, never()).create(any());
+    }
+
+    @Test
+    void crearIgnoraIdProporcionadoPorCliente() throws Exception {
+        when(service.create(any())).thenReturn(recurso(10L));
+        mockMvc.perform(post("/api/empresas").with(csrfToken(true))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"id\":999,\"nombre\":\"Nueva\",\"industria\":\"Tecnologia\",\"plan\":\"Pro\"}"))
+            .andExpect(status().isCreated());
+        verify(service).create(argThat(e -> e.getId() == null && e.getNombre().equals("Nueva")
+                && e.getIndustria().equals("Tecnologia") && e.getPlan().equals("Pro")));
     }
 }
