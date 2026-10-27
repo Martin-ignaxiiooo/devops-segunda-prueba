@@ -166,7 +166,7 @@ jobs:
         run: |
           test -n "$EKS_CLUSTER_NAME" || { echo '::error::Falta la variable EKS_CLUSTER_NAME'; exit 1; }
           test -n "$DB_PASSWORD" || { echo '::error::Falta el secreto DB_PASSWORD'; exit 1; }
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
