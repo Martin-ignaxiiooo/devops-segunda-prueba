@@ -10,6 +10,7 @@ import org.springframework.test.context.jdbc.SqlConfig;
 import io.cucumber.spring.CucumberContextConfiguration;
 
 @CucumberContextConfiguration
+@org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
