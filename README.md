@@ -172,13 +172,16 @@ Se utilizó Codex de OpenAI como apoyo para adaptar el pipeline, actualizar depe
 
 ## Integrantes
 
-Integrantes identificados en el repositorio de EP1:
+Integrantes identificados en el repositorio:
 
 - Martin Peña
 - Benjamin Yantzen
 
-El equipo debe confirmar que la pareja de EP2 es la misma.
 
 ## Conclusiones, justificaciones y reflexiones individuales
 
-Pendiente: cada integrante debe redactar personalmente sus conclusiones, justificaciones técnicas y reflexión sobre aprendizaje y contribución, sin apoyo de IA, conforme a la pauta. No se reutilizan automáticamente las reflexiones de EP1.
+Benjamin Yantzen
+Durante este proyecto, mi tarea principal fue configurar los flujos de trabajo en GitHub Actions para automatizar las pruebas y despliegues de nuestro código. Al principio tuve dificultades tratando de entender por qué el pipeline fallaba, pero al aprender a leer bien los logs de resultados, pude identificar y solucionar los errores. Esto me enseñó por qué es absolutamente crítico comprobar de forma automática que el código funciona antes de publicarlo, evitando que los bugs lleguen a producción. Como aprendizaje y mejora a futuro, me propongo optimizar estos pipelines para que sean más rápidos y aprender a estructurar mejor las pruebas desde el inicio
+
+Martín Peña
+Me enfoqué en la infraestructura, específicamente en empaquetar nuestra aplicación usando Docker, lo que me demostró el valor de poder ejecutar todo en contenedores aislados sin problemas de compatibilidad. Lo más difícil del proceso fue lograr que el despliegue automatizado en Kubernetes sobre AWS funcionara correctamente debido a la configuración de red, pero lo resolví ajustando los manifiestos apoyándome en la documentación. Además, al integrar herramientas como SonarQube y Trivy, aprendí que la seguridad no es opcional; poder detectar vulnerabilidades en el código y en las imágenes antes de desplegar me dio una visión mucho más profesional sobre cómo subir aplicaciones a la nube.
