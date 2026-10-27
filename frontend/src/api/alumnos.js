@@ -1,10 +1,11 @@
 import axios from 'axios'
 
-// El backend está expuesto en localhost:8080 en el host
-// En producción cambiar por la URL pública del backend via variable de entorno
-//const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
-
-const api = axios.create({ baseURL: `/ep02` })
+// Rutas del mismo origen; Axios propaga el token CSRF emitido por Spring.
+const api = axios.create({
+  baseURL: '/ep02',
+  xsrfCookieName: 'XSRF-TOKEN',
+  xsrfHeaderName: 'X-XSRF-TOKEN'
+})
 
 export const getAlumnos = () => api.get('')
 export const createAlumno = (data) => api.post('', data)

@@ -16,7 +16,7 @@ La [primera ejecución completa aprobada](https://github.com/Martin-ignaxiiooo/d
 
 Resultados comprobados el 27 de octubre de 2026:
 
-- Backend: 33 pruebas aprobadas, incluyendo siete escenarios BDD; JaCoCo supera los umbrales de 80%.
+- Backend: 35 pruebas (incluidos siete escenarios BDD y dos controles negativos CSRF); JaCoCo supera los umbrales de 80%.
 - Frontend: 73 pruebas aprobadas y cobertura de líneas de 100%.
 - SonarQube: puerta de calidad aprobada, cobertura global de 98,1%, cero bugs y cero vulnerabilidades en esa ejecución.
 - Trivy: las tres imágenes aprobaron el umbral HIGH/CRITICAL con corrección disponible.
@@ -106,6 +106,8 @@ Trivy inspecciona las tres imágenes y bloquea hallazgos HIGH o CRITICAL con cor
 
 No se guardan credenciales en Git. `.env`, `.local/`, `.tools/` y `secrets.txt` están excluidos. La clave de PostgreSQL se inyecta como Secret de Kubernetes. Backend y frontend utilizan usuarios sin privilegios; las políticas de red restringen el ingreso hacia base de datos y backend. Su aplicación requiere el soporte de NetworkPolicy del CNI, configurado en la infraestructura.
 
+Spring Security mantiene CSRF habilitado para la SPA: el GET inicial emite la cookie `XSRF-TOKEN` y Axios la envía como `X-XSRF-TOKEN` en las escrituras. Las solicitudes sin token o con uno inválido reciben HTTP 403. Los clientes de API deben obtener primero la cookie con un GET y conservarla al enviar el encabezado.
+
 La API del ejemplo no implementa autenticación de usuarios: utiliza solo datos ficticios y mantenla dentro del alcance del laboratorio.
 
 ## AWS Academy Learner Lab
@@ -168,7 +170,7 @@ EKS y el almacenamiento pueden generar cargos aunque la sesión del laboratorio 
 | Indicador | Archivos | Comprobación pendiente o disponible |
 |---|---|---|
 | IE1 | Dockerfiles y `.dockerignore` | Tres builds y escaneos de imagen aprobados; usuarios sin privilegios |
-| IE2 | Pruebas backend y frontend | 33 pruebas backend y 73 frontend aprobadas en CI |
+| IE2 | Pruebas backend y frontend | Pruebas backend y 73 frontend, con cobertura y controles CSRF |
 | IE3 | Dependabot, SonarQube, Trivy, límites y políticas | Puerta de calidad aprobada y ejecución bloqueada conservada como evidencia |
 | IE4 | Pipeline, imágenes SHA y script deploy | Despliegue EKS aprobado, URL pública y artefactos de trazabilidad |
 | IE5 | `k8s/`, PVC, probes, HPA | Rollouts correctos, cinco pods de aplicación y volumen persistente Bound |
