@@ -1,16 +1,35 @@
 # EP2 - Ingeniería DevOps (DOY0101)
 
+![CI/CD AWS](https://github.com/Martin-ignaxiiooo/devops-segunda-prueba/actions/workflows/ci-cd.yml/badge.svg?branch=main)
+
 Repositorio de entrega: https://github.com/Martin-ignaxiiooo/devops-segunda-prueba
 
 Aplicación base: Gestor de Alumnos del [laboratorio del profesor](https://github.com/mauriciovelasquezduoc/202602Devops01/). Utiliza Spring Boot 4 / Gradle / Java 21, React / Vite y PostgreSQL 16. Los datos iniciales son ejemplos del laboratorio.
 
-## Estado de la entrega
+## Estado y evidencias
 
-Preparación local en curso. Las pruebas del backend y frontend pasaron localmente. La ejecución completa en GitHub Actions, el análisis SonarQube y el despliegue AWS todavía deben verificarse. No se presenta una configuración escrita como evidencia de una ejecución exitosa.
+Aplicación desplegada en AWS Academy Learner Lab:
+
+**http://ac4ea9fb00ed74430bff6c139b708c3e-1588630464.us-east-1.elb.amazonaws.com**
+
+La [primera ejecución completa aprobada](https://github.com/Martin-ignaxiiooo/devops-segunda-prueba/actions/runs/40450427650) construyó, verificó, publicó y desplegó las tres imágenes. La [página del workflow](https://github.com/Martin-ignaxiiooo/devops-segunda-prueba/actions/workflows/ci-cd.yml) muestra las ejecuciones posteriores y sus artefactos.
+
+Resultados comprobados el 27 de octubre de 2026:
+
+- Backend: 33 pruebas aprobadas, incluyendo siete escenarios BDD; JaCoCo supera los umbrales de 80%.
+- Frontend: 73 pruebas aprobadas y cobertura de líneas de 100%.
+- SonarQube: puerta de calidad aprobada, cobertura global de 98,1%, cero bugs y cero vulnerabilidades en esa ejecución.
+- Trivy: las tres imágenes aprobaron el umbral HIGH/CRITICAL con corrección disponible.
+- Kubernetes: frontend 2/2, backend 2/2, PostgreSQL 1/1, PVC EBS Bound y métricas de CPU disponibles para el HPA.
+- Verificación funcional en AWS: creación y edición desde la interfaz; importación, exportación CSV y eliminación de un registro temporal mediante la API.
+
+La [ejecución inicial bloqueada](https://github.com/Martin-ignaxiiooo/devops-segunda-prueba/actions/runs/40447441479) conserva evidencia de que los hallazgos de seguridad impidieron desplegar. Las correcciones se integraron mediante el [Pull Request 20](https://github.com/Martin-ignaxiiooo/devops-segunda-prueba/pull/20).
+
+El entorno es un laboratorio con datos ficticios, HTTP y una sesión temporal de AWS Academy. La disponibilidad depende de mantener activo el Learner Lab.
 
 ## Estructura
 
-- `backend/`: API CRUD y CSV, pruebas JUnit, Mockito, integración y contratos.
+- `backend/`: API CRUD y CSV, pruebas JUnit, Mockito e integración.
 - `frontend/`: interfaz React y 73 pruebas Vitest.
 - `database/`: imagen PostgreSQL y datos de ejemplo.
 - `.github/workflows/ci-cd.yml`: integración y despliegue en un único repositorio.
@@ -41,7 +60,8 @@ El volumen de datos se conserva al detener Compose.
 flowchart LR
   C[Push o Pull Request] --> B[JUnit y JaCoCo]
   C --> F[ESLint, Vitest y build]
-  C --> S[SonarQube]
+  B --> S[SonarQube]
+  F --> S
   C --> I[Docker y Trivy]
   B --> G{Todos aprobados}
   F --> G
@@ -80,7 +100,7 @@ Vitest exige al menos 90% de líneas, ramas, funciones y sentencias. Los reporte
 
 ## Seguridad
 
-Dependabot revisa dependencias y acciones semanalmente. Un SonarQube temporal en el runner analiza Java y JavaScript. Su puerta de calidad bloquea bugs, vulnerabilidades y cobertura global inferior al 80%. `sonar.qualitygate.wait=true` obliga a esperar el resultado y transmite el fallo al pipeline. El servidor y su token de analisis solo viven durante ese job, y no requieren una cuenta externa. El administrador temporal cambia su clave inicial por una clave aleatoria antes de analizar.
+Dependabot revisa dependencias y acciones semanalmente, con actualizaciones agrupadas. El grafo Gradle se publica desde el workflow de dependencias; npm también se audita en cada ejecución de CI, incluyendo dependencias de desarrollo. Un SonarQube temporal en el runner analiza Java y JavaScript. Su puerta de calidad bloquea bugs, vulnerabilidades y cobertura global inferior al 80%. `sonar.qualitygate.wait=true` obliga a esperar el resultado y transmite el fallo al pipeline. El servidor y su token de analisis solo viven durante ese job, y no requieren una cuenta externa. El administrador temporal cambia su clave inicial por una clave aleatoria antes de analizar.
 
 Trivy inspecciona las tres imágenes y bloquea hallazgos HIGH o CRITICAL con corrección disponible. Los hallazgos sin corrección quedan fuera de ese umbral; esto no equivale a afirmar que una imagen no tiene vulnerabilidades.
 
@@ -147,15 +167,19 @@ EKS y el almacenamiento pueden generar cargos aunque la sesión del laboratorio 
 
 | Indicador | Archivos | Comprobación pendiente o disponible |
 |---|---|---|
-| IE1 | Dockerfiles y `.dockerignore` | Build y análisis de imágenes en Actions pendientes |
-| IE2 | Pruebas backend y frontend | Pruebas locales aprobadas; ejecución CI pendiente |
-| IE3 | Dependabot, SonarQube, Trivy, límites y políticas | Análisis y bloqueo en CI pendientes |
-| IE4 | Pipeline, imágenes SHA y script deploy | Despliegue AWS y artefactos pendientes |
-| IE5 | `k8s/`, PVC, probes, HPA | Rollouts y persistencia en AWS pendientes |
+| IE1 | Dockerfiles y `.dockerignore` | Tres builds y escaneos de imagen aprobados; usuarios sin privilegios |
+| IE2 | Pruebas backend y frontend | 33 pruebas backend y 73 frontend aprobadas en CI |
+| IE3 | Dependabot, SonarQube, Trivy, límites y políticas | Puerta de calidad aprobada y ejecución bloqueada conservada como evidencia |
+| IE4 | Pipeline, imágenes SHA y script deploy | Despliegue EKS aprobado, URL pública y artefactos de trazabilidad |
+| IE5 | `k8s/`, PVC, probes, HPA | Rollouts correctos, cinco pods de aplicación y volumen persistente Bound |
 
 ## Uso de IA
 
 Se utilizó Codex de OpenAI como apoyo para revisar la pauta, adaptar la aplicación del laboratorio a este repositorio, preparar configuraciones de CI/CD y analizar resultados de pruebas. El equipo debe revisar y validar el contenido y registrar el uso final de IA conforme a la [orientación de Duoc](https://bibliotecas.duoc.cl/ia).
+
+## Integrantes
+
+Completar los nombres de ambos integrantes antes de entregar.
 
 ## Conclusiones y reflexión de cada integrante
 

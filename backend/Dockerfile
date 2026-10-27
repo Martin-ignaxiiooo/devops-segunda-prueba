@@ -3,7 +3,6 @@ WORKDIR /app
 COPY gradlew ./
 COPY gradle ./gradle
 COPY build.gradle settings.gradle gradle.properties ./
-COPY config ./config
 COPY src ./src
 RUN chmod +x gradlew && ./gradlew bootJar -x test --no-daemon
 
