@@ -137,7 +137,7 @@ Estas operaciones requieren AWS CLI y kubectl. Configura `EKS_CLUSTER_NAME=ep02-
 
 Renueva los tres valores AWS al cambiar la sesión. Un token vencido debe producir un fallo de autenticación; no se omite la seguridad para continuar.
 
-El frontend se expone por un servicio `LoadBalancer`; el pipeline espera su dirección pública y verifica tanto la interfaz como `/ep02`. La URL queda en el resumen y en `deploy-evidence`. El balanceador distribuye tráfico entre zonas mediante la anotación `aws-load-balancer-cross-zone-load-balancing-enabled`, también cuando el laboratorio utiliza un único nodo. PostgreSQL y el backend conservan servicios internos. Como alternativa de diagnóstico desde una terminal con acceso al clúster:
+El frontend se expone por un servicio `LoadBalancer`; el pipeline espera su dirección pública y verifica tanto la interfaz como `/api/empresas`. La URL queda en el resumen y en `deploy-evidence`. El balanceador distribuye tráfico entre zonas mediante la anotación `aws-load-balancer-cross-zone-load-balancing-enabled`, también cuando el laboratorio utiliza un único nodo. PostgreSQL y el backend conservan servicios internos. Como alternativa de diagnóstico desde una terminal con acceso al clúster:
 
 ```sh
 aws eks update-kubeconfig --region us-east-1 --name ep02-devops
@@ -170,18 +170,19 @@ Las verificaciones funcionales y de escalado se conservan como evidencias de la 
 
 Se utilizó Codex de OpenAI como apoyo para adaptar el pipeline, actualizar dependencias, portar pruebas y preparar la interfaz de Empresas. El equipo debe revisar y validar el contenido, así como declarar y citar el uso final conforme a la [orientación de Duoc](https://bibliotecas.duoc.cl/ia).
 
-## Integrantes
+## Integrantes EP2
 
-Integrantes identificados en el repositorio:
+Equipo confirmado para la Evaluación Parcial 2:
 
 - Martin Peña
 - Benjamin Yantzen
 
-
 ## Conclusiones, justificaciones y reflexiones individuales
 
-Benjamin Yantzen
+### Benjamin Yantzen
+
 Durante este proyecto, mi tarea principal fue configurar los flujos de trabajo en GitHub Actions para automatizar las pruebas y despliegues de nuestro código. Al principio tuve dificultades tratando de entender por qué el pipeline fallaba, pero al aprender a leer bien los logs de resultados, pude identificar y solucionar los errores. Esto me enseñó por qué es absolutamente crítico comprobar de forma automática que el código funciona antes de publicarlo, evitando que los bugs lleguen a producción. Como aprendizaje y mejora a futuro, me propongo optimizar estos pipelines para que sean más rápidos y aprender a estructurar mejor las pruebas desde el inicio
 
-Martín Peña
+### Martin Peña
+
 Me enfoqué en la infraestructura, específicamente en empaquetar nuestra aplicación usando Docker, lo que me demostró el valor de poder ejecutar todo en contenedores aislados sin problemas de compatibilidad. Lo más difícil del proceso fue lograr que el despliegue automatizado en Kubernetes sobre AWS funcionara correctamente debido a la configuración de red, pero lo resolví ajustando los manifiestos apoyándome en la documentación. Además, al integrar herramientas como SonarQube y Trivy, aprendí que la seguridad no es opcional; poder detectar vulnerabilidades en el código y en las imágenes antes de desplegar me dio una visión mucho más profesional sobre cómo subir aplicaciones a la nube.
