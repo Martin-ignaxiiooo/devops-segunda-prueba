@@ -11,7 +11,7 @@ plugins {
     id 'com.diffplug.spotless' version '7.0.4'       // limpia formato
     id 'pmd'                                          // valida reglas estáticas
     id 'checkstyle'                                   // convenciones de programación
-    id 'com.github.spotbugs' version '6.5.12'         // bugs potenciales en bytecode
+    id 'com.github.spotbugs' version '6.5.13'         // bugs potenciales en bytecode
     id 'io.gatling.gradle' version '3.16.0'           // pruebas de carga (rendimiento)
     id 'de.undercouch.download' version '5.7.0'       // descarga JMeter para pruebas de carga
 }
