@@ -104,7 +104,18 @@ El comando anterior inspecciona y valida; no crea recursos. Después de revisar 
 python scripts/bootstrap-aws.py --create
 ```
 
-La creación de EKS puede tardar varios minutos. Configura `EKS_CLUSTER_NAME=ep02-devops` como variable de Actions y estos secretos:
+La creación de EKS puede tardar varios minutos. Cuando el nodo esté activo, configura el acceso y el controlador de almacenamiento del laboratorio:
+
+```sh
+aws eks wait cluster-active --region us-east-1 --name ep02-devops
+aws eks wait nodegroup-active --region us-east-1 --cluster-name ep02-devops --nodegroup-name ep02-nodes
+aws eks update-kubeconfig --region us-east-1 --name ep02-devops
+kubectl patch deployment ebs-csi-controller -n kube-system --type merge --patch-file infra/ebs-csi-lab-patch.json
+kubectl rollout status deployment/ebs-csi-controller -n kube-system --timeout=180s
+aws cloudformation wait stack-create-complete --region us-east-1 --stack-name ep02-devops
+```
+
+Estas operaciones requieren AWS CLI y kubectl. Configura `EKS_CLUSTER_NAME=ep02-devops` como variable de Actions y estos secretos:
 
 | Secreto | Uso |
 |---|---|
@@ -115,7 +126,7 @@ La creación de EKS puede tardar varios minutos. Configura `EKS_CLUSTER_NAME=ep0
 
 Renueva los tres valores AWS al cambiar la sesión. Un token vencido debe producir un fallo de autenticación; no se omite la seguridad para continuar.
 
-El frontend se expone inicialmente por `ClusterIP`. Para demostrar la aplicación desde una terminal con acceso al clúster:
+El frontend se expone por un servicio `LoadBalancer`; el pipeline espera su dirección pública y verifica tanto la interfaz como `/ep02`. La URL queda en el resumen y en `deploy-evidence`. PostgreSQL y el backend conservan servicios internos. Como alternativa de diagnóstico desde una terminal con acceso al clúster:
 
 ```sh
 aws eks update-kubeconfig --region us-east-1 --name ep02-devops

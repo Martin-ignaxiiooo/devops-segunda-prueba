@@ -207,6 +207,8 @@ jobs:
           echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
           sudo install -m 0755 kubectl /usr/local/bin/kubectl
           aws eks update-kubeconfig --name "$EKS_CLUSTER_NAME" --region "$AWS_REGION"
+          subnets=$(aws eks describe-cluster --name "$EKS_CLUSTER_NAME" --query "join(',', cluster.resourcesVpcConfig.subnetIds)" --output text)
+          echo "PUBLIC_SUBNETS=$subnets" >> "$GITHUB_ENV"
       - name: Configurar controlador EBS para el rol del Learner Lab
         run: |
           kubectl patch deployment ebs-csi-controller -n kube-system --type merge --patch-file infra/ebs-csi-lab-patch.json
@@ -216,7 +218,7 @@ jobs:
       - name: Evidencia de trazabilidad
         run: |
           mkdir -p evidence
-          printf 'commit=%s\nrun=%s\ncluster=%s\n' "$GITHUB_SHA" "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" "$EKS_CLUSTER_NAME" > evidence/deploy.txt
+          printf 'commit=%s\nrun=%s\ncluster=%s\napp_url=%s\n' "$GITHUB_SHA" "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" "$EKS_CLUSTER_NAME" "$APP_URL" > evidence/deploy.txt
           kubectl get deployments,pods,services,hpa -n "$NAMESPACE" -o wide > evidence/kubernetes.txt
           cat evidence/deploy.txt >> "$GITHUB_STEP_SUMMARY"
       - name: Diagnostico si falla

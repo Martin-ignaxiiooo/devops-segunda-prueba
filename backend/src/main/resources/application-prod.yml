@@ -9,7 +9,7 @@ spring:
     url: ${DB_URL:jdbc:postgresql://db:5432/ep02}
     driverClassName: org.postgresql.Driver
     username: ${DB_USERNAME:ep02_user}
-    password: ${DB_PASSWORD:ep02_pass}
+    password: ${DB_PASSWORD}
 
   jpa:
     hibernate:
