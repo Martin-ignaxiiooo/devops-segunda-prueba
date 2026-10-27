@@ -51,9 +51,9 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
 
     // Cucumber - tests de aceptación
-    testImplementation 'io.cucumber:cucumber-java:7.20.1'
-    testImplementation 'io.cucumber:cucumber-spring:7.20.1'
-    testImplementation 'io.cucumber:cucumber-junit-platform-engine:7.20.1'
+    testImplementation 'io.cucumber:cucumber-java:8.0.4'
+    testImplementation 'io.cucumber:cucumber-spring:8.0.4'
+    testImplementation 'io.cucumber:cucumber-junit-platform-engine:8.0.4'
     testImplementation 'org.junit.platform:junit-platform-suite:1.11.4'
     testRuntimeOnly 'org.junit.platform:junit-platform-suite-engine:1.11.4'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.11.4'
