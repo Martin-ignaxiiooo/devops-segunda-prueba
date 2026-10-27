@@ -54,6 +54,14 @@ docker compose down
 
 El volumen de datos se conserva al detener Compose.
 
+## Construcción de contenedores
+
+El Dockerfile del backend compila el JAR con Gradle y JDK 21 en una primera etapa. La imagen final copia únicamente el JAR y utiliza JRE 21 Alpine; Gradle, el JDK y las fuentes quedan en la etapa de construcción. El proceso Java utiliza UID 10001, un máximo de heap de 256 MiB y un healthcheck del endpoint de Actuator. Las pruebas se ejecutan en el job de CI antes del despliegue.
+
+El frontend instala exactamente el lockfile con `npm ci` y genera los archivos estáticos con Node 22. La etapa final contiene Nginx sin privilegios y `dist/`; no contiene Node ni `node_modules`. Nginx utiliza UID 101, escucha en 8080 y resuelve el backend mediante el DNS del entorno.
+
+PostgreSQL utiliza la imagen oficial 16 Alpine y UID 70. Elimina el ejecutable `gosu`, innecesario al iniciar directamente sin root. El SQL inicial se aplica solo a un volumen nuevo. Los archivos `.dockerignore` excluyen dependencias locales, reportes y productos de compilación de los contextos de build.
+
 ## Pipeline y trazabilidad
 
 ```mermaid
@@ -167,7 +175,7 @@ EKS y el almacenamiento pueden generar cargos aunque la sesión del laboratorio 
 
 ## Evidencias de evaluación
 
-| Indicador | Archivos | Comprobación pendiente o disponible |
+| Indicador | Archivos | Evidencia disponible |
 |---|---|---|
 | IE1 | Dockerfiles y `.dockerignore` | Tres builds y escaneos de imagen aprobados; usuarios sin privilegios |
 | IE2 | Pruebas backend y frontend | 36 pruebas backend y 73 frontend, con cobertura y controles CSRF |
