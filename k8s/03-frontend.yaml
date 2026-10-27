@@ -55,6 +55,7 @@ metadata:
   name: ep02-frontend
   namespace: ${NAMESPACE}
   annotations:
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
     service.beta.kubernetes.io/aws-load-balancer-subnets: "${PUBLIC_SUBNETS}"
     service.beta.kubernetes.io/aws-load-balancer-additional-resource-tags: Project=ep02-devops
 spec:
