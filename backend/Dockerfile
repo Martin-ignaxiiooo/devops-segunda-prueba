@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21-jdk-alpine AS build
+FROM eclipse-temurin:25-jdk-alpine AS build
 WORKDIR /app
 COPY gradlew ./
 COPY gradle ./gradle
@@ -6,7 +6,7 @@ COPY build.gradle settings.gradle gradle.properties ./
 COPY src ./src
 RUN chmod +x gradlew && ./gradlew bootJar -x test --no-daemon
 
-FROM eclipse-temurin:21-jre-alpine AS runtime
+FROM eclipse-temurin:25-jre-alpine AS runtime
 WORKDIR /app
 RUN apk --no-cache upgrade && apk --no-cache add curl \
     && addgroup -S -g 10001 appgroup && adduser -S -u 10001 -G appgroup appuser
