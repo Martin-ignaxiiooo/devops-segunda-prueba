@@ -1,4 +1,4 @@
-FROM postgres:16-alpine
+FROM postgres:18-alpine
 # El arranque es directamente como postgres; no necesita el ejecutable gosu.
 RUN apk --no-cache upgrade && rm /usr/local/bin/gosu
 USER 70:70
