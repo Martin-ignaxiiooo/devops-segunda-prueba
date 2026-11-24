@@ -20,6 +20,22 @@ def module(name):
 audit = module("audit-manifests")
 render = module("render-observability")
 metrics = module("ci-metrics")
+gate = module("verify-gate-run")
+
+
+class GateRunTests(unittest.TestCase):
+    def test_skipped_name_is_scoped_to_the_real_scenario(self):
+        jobs = [{"name": "escenario-quality / despliegue-simulado-${{ inputs.scenario }}",
+                 "conclusion": "skipped", "html_url": "https://example.test/job/1"}]
+        rows = gate.evaluate(jobs)
+        self.assertTrue(next(r for r in rows if r["scenario"] == "quality" and r["job"] == "despliegue-simulado")["passed"])
+        self.assertFalse(next(r for r in rows if r["scenario"] == "compliance" and r["job"] == "despliegue-simulado")["passed"])
+
+    def test_unresolved_name_cannot_hide_an_executed_deployment(self):
+        jobs = [{"name": "escenario-quality / despliegue-simulado-${{ inputs.scenario }}",
+                 "conclusion": "success", "html_url": "https://example.test/job/2"}]
+        rows = gate.evaluate(jobs)
+        self.assertFalse(next(r for r in rows if r["scenario"] == "quality" and r["job"] == "despliegue-simulado")["passed"])
 
 
 class PolicyTests(unittest.TestCase):

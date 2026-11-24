@@ -1,14 +1,16 @@
 # Cierre técnico EP3 — 24-11-2026
 
-Repositorio: https://github.com/Martin-ignaxiiooo/devops-segunda-prueba. Rama de entrega local: `ep3/observabilidad`. Base main conservada: `14cf575e1875f43cc59961f314ab9be7bee7d1f0`.
+Repositorio: https://github.com/Martin-ignaxiiooo/devops-segunda-prueba. Rama publicada: [`ep3/observabilidad`](https://github.com/Martin-ignaxiiooo/devops-segunda-prueba/tree/ep3/observabilidad). Base main conservada: `14cf575e1875f43cc59961f314ab9be7bee7d1f0`.
 
 Commit de implementación: `d09b56668b117ecc7ac3f72b80b2893f1719835c`, autor Benjamín Yantzen, `benjaminy2747@gmail.com`. La identidad coincide con la cuenta autenticada Benjaa4747. Este documento integra el commit posterior de documentación; consultar `git log` para identificarlo.
 
 ## Publicación y ejecución remota
 
-Se intentó publicar exclusivamente `ep3/observabilidad`. GitHub rechazó el push con HTTP 403: la cuenta Benjaa4747 tiene lectura y no escritura en el repositorio de Martín. No se publicó la rama, no se modificó main y no se ejecutaron workflows EP3. La captura de Actions muestra cero runs de esta rama; no representa una ejecución exitosa.
+El primer intento fue rechazado con HTTP 403. Después de habilitar escritura a Benjaa4747, se publicó exclusivamente `ep3/observabilidad`. No se modificó main ni se ejecutó un despliegue AWS. El registro inicial se conserva como historial, no como estado actual.
 
-Martín debe agregar a Benjaa4747 como colaborador y este aceptar la invitación, o importar y publicar la rama desde el bundle incluido en el ZIP. El propietario puede publicar el historial manteniendo la autoría real de Benjamín; eso no convierte estos commits en contribuciones individuales de Martín.
+El [CI real 45460855415](https://github.com/Martin-ignaxiiooo/devops-segunda-prueba/actions/runs/45460855415), correspondiente a `bc9b946`, terminó en success: backend, frontend, SonarQube, las tres imágenes/Trivy y la auditoría de configuraciones aprobaron. El job ECR/EKS quedó skipped por la condición de rama. El [workflow de dependencias 45460928738](https://github.com/Martin-ignaxiiooo/devops-segunda-prueba/actions/runs/45460928738) también aprobó.
+
+La [primera suite de bloqueos](https://github.com/Martin-ignaxiiooo/devops-segunda-prueba/actions/runs/45460855852) ejecutó los cuatro escenarios: fallas intencionales de calidad y cumplimiento, sus despliegues simulados omitidos, y éxito/recuperación aprobados. Su verificador detectó un problema de identificación: GitHub devuelve nombres con `${{ inputs.scenario }}` sin resolver para algunos jobs skipped. Se corrigió el reconocimiento usando el escenario y el estado real, con dos pruebas de regresión. Esto no cambia dependencias ni permite desplegar tras un control fallido. Consultar los runs más recientes de la rama y los artefactos del ZIP para la reejecución corregida.
 
 Los workflows preparados son:
 
@@ -26,13 +28,14 @@ No hay credenciales AWS, AWS CLI ni contexto kubectl configurados en Windows/Ubu
 | Backend | 24 pruebas aprobadas; JaCoCo LINE 100% dentro del alcance configurado en EP2 |
 | Frontend | 32 pruebas aprobadas; cobertura 100%; lint y build aprobados |
 | Verificación funcional final | 48 comprobaciones aprobadas: CRUD/PostgreSQL, CSRF, correlación y consultas de 15 paneles |
-| Controles nuevos | 9 pruebas aprobadas; workflows YAML válidos |
+| Controles nuevos | 11 pruebas locales aprobadas, incluidas dos regresiones del verificador; primera auditoría remota aprobada |
 | Kubernetes estático | 33/33 recursos válidos con kubeconform; auditoría aprobada |
 | Trivy config | 0 HIGH/CRITICAL en los manifiestos finales |
 | Trivy imágenes finales | 0 HIGH/CRITICAL corregibles en backend, frontend y PostgreSQL |
 | SonarQube local | Scanner exit 0; gate OK; 0 bugs; 0 vulnerabilidades; cobertura combinada 98,9% |
-| Bloqueos locales | Éxito, falla JUnit, incumplimiento y recuperación con los resultados esperados; despliegue simulado |
-| GitHub Actions / AWS | No verificados para EP3 por los accesos faltantes |
+| Bloqueos | Cuatro casos locales y jobs reales de Actions; despliegue simulado bloqueado en calidad/cumplimiento |
+| GitHub Actions | CI principal y dependencias aprobados; suite con fallas intencionales y verificador corregido |
+| AWS/Kubernetes | Sin verificación de ejecución: no hay credenciales ni contexto configurado |
 
 SonarQube usa su propio alcance combinado de análisis; su 98,9% no se sustituye por el 100% de los reportes JaCoCo/Vitest configurados. El análisis identifica el commit `d09b566`. El servidor SonarQube fue temporal y local, con límite de memoria de 2 GiB; los JSON de gate, medidas e issues y el log del scanner se conservaron antes de detenerlo.
 
@@ -46,8 +49,8 @@ Problemas corregidos: métricas textfile con saltos de línea Windows, series du
 | IE2, 20% | Integración Kubernetes/CI implementada y validada estáticamente | Ejecutar y verificar orquestación real |
 | IE3, 10% | Dashboard de 15 paneles con datos locales reales | Fuentes de Kubernetes y un run/despliegue real de CI |
 | IE4, 10% | Guía, evidencia, resumen y estructura de PPT preparados | Apartados propios del equipo y revisión del formato de entrega |
-| IE5, 20% | SonarQube, Trivy, pruebas y políticas locales aprobados | Resultados del pipeline publicado en Actions |
-| IE6, 20% | Bloqueos comprobados en ensayo local con despliegue simulado | Jobs reales de Actions fallidos/omitidos y recuperación |
+| IE5, 20% | SonarQube, Trivy, pruebas y políticas aprobados en CI real | Mantener artefactos del run entregado |
+| IE6, 20% | Fallas/omisiones y recuperación observadas en Actions; simulación sin AWS | Mostrar los casos negativos y el verificador de la reejecución corregida |
 
 ## Archivos de entrega y participación
 

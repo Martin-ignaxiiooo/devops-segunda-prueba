@@ -8,8 +8,8 @@ Fecha: 24-11-2026. Base `14cf575e1875f43cc59961f314ab9be7bee7d1f0`, rama `ep3/ob
 | IE2: automatización y orquestación (20%) | Generación de manifiestos, RBAC, redes, límites y despliegue integrado al pipeline. Configuraciones validadas; 33 recursos pasan kubeconform. | Ejecución real en Kubernetes; targets, TLS kubelet, permisos y capacidad efectiva del nodo. |
 | IE3: dashboard (10%) | 15 paneles con consultas y datos reales: duración, ambas coberturas, CPU, memoria, disponibilidad, errores, logs y procedencia. | Dashboard consultando fuentes Kubernetes y un despliegue real de Actions. |
 | IE4: documentación (10%) | Guía operativa `EP3.md`, fuentes, comandos, limitaciones y registro de asistencia IA. | Explicaciones, decisiones, conclusiones y reflexiones redactadas por los integrantes; revisión del formato solicitado por la rúbrica. |
-| IE5: cumplimiento y auditoría (20%) | Auditor propio, kubeconform, validadores nativos y Trivy config. Nueve pruebas de controles pasan. SonarQube y controles EP2 conservados. | Resultados del pipeline completo con SonarQube y auditorías de la versión que el equipo publique. |
-| IE6: bloqueo (20%) | Dependencias obligatorias de `deploy`; ensayo local de éxito, falla de JUnit, incumplimiento y recuperación con resultados esperados. | Runs reales del workflow `gate-drill.yml`, con jobs de despliegue simulado omitidos ante fallas. No se ha probado un bloqueo remoto durante esta sesión. |
+| IE5: cumplimiento y auditoría (20%) | Auditor propio, kubeconform, validadores nativos y Trivy config; once pruebas locales de controles. CI real con SonarQube/Trivy y controles EP2 aprobado; enlaces en `CIERRE_EP3.md`. | Conservar los artefactos del run entregado. |
+| IE6: bloqueo (20%) | Dependencias obligatorias de `deploy`; cuatro casos locales y jobs reales de Actions con fallas de calidad/cumplimiento y despliegues simulados omitidos. | Mostrar la recuperación y el verificador de la suite corregida; consultar `CIERRE_EP3.md`. |
 
 ## Resultados observados
 
@@ -37,4 +37,4 @@ node scripts/verify-observability.mjs
 
 El procedimiento crea y elimina una empresa temporal y produce respuestas 400/403/404 deliberadas. Estas quedan como errores registrados reales. Reemplaza los reportes de esa comprobación; conservar copias fechadas si se necesita comparar ejecuciones. Las pruebas y los ensayos de controles se ejecutan con los comandos de `EP3.md`.
 
-No se ha desplegado AWS ni publicado cambios remotos. El equipo todavía debe revisar los cambios, realizar contribuciones propias verificables y ejecutar las demostraciones remotas cuando exista autorización. No se presenta esta copia local como cumplimiento completo de los seis indicadores.
+Se publicó `ep3/observabilidad` y se ejecutaron verificaciones reales de Actions; no se desplegó AWS. Consultar `CIERRE_EP3.md` y los artefactos para distinguir resultados locales y remotos. El equipo todavía debe revisar los cambios, realizar contribuciones propias verificables y completar sus apartados personales. No se presenta la validación estática como un despliegue Kubernetes realizado.
