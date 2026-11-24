@@ -1,0 +1,69 @@
+name: EP3 - ensayo aislado de bloqueos
+on:
+  workflow_call:
+    inputs:
+      scenario:
+        type: string
+        default: success
+  workflow_dispatch:
+    inputs:
+      scenario:
+        description: success, quality o compliance; no usa AWS
+        type: choice
+        options: [success, quality, compliance]
+        default: success
+permissions:
+  contents: read
+jobs:
+  quality:
+    name: calidad-${{ inputs.scenario }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Falla reversible solo en workspace efimero
+        if: inputs.scenario == 'quality'
+        run: sed -i 's/isNotNull()/isNull()/' backend/src/test/java/cl/duoc/jv0101/caso01/empresas/OpenApiConfigTest.java
+      - working-directory: backend
+        run: chmod +x gradlew && ./gradlew test jacocoTestCoverageVerification --no-daemon
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: drill-quality-${{ inputs.scenario }}
+          path: backend/build/reports/
+  compliance:
+    name: cumplimiento-${{ inputs.scenario }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r scripts/requirements-validation.txt
+      - name: Renderizar fixture; nunca se aplica a un cluster
+        env:
+          SCENARIO: ${{ inputs.scenario }}
+        run: |
+          mkdir -p reports
+          python3 scripts/render-observability.py > reports/drill.json
+          if [ "$SCENARIO" = compliance ]; then
+            python3 -c 'import json; p="reports/drill.json"; d=json.load(open(p)); c=next(x for x in d["items"] if x["kind"]=="Deployment")["spec"]["template"]["spec"]["containers"][0]; c["securityContext"]["privileged"]=True; json.dump(d,open(p,"w"))'
+          fi
+      - run: python3 scripts/audit-manifests.py reports/drill.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: drill-compliance-${{ inputs.scenario }}
+          path: reports/
+  deploy-simulation:
+    name: despliegue-simulado-${{ inputs.scenario }}
+    needs: [quality, compliance]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo 'Controles aprobados. Simulacion sin AWS ni publicacion de imagenes.'

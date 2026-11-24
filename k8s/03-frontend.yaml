@@ -17,6 +17,7 @@ spec:
       securityContext:
         runAsNonRoot: true
         runAsUser: 101
+        fsGroup: 101
         seccompProfile:
           type: RuntimeDefault
       containers:
@@ -29,6 +30,7 @@ spec:
               value: ep02-backend.${NAMESPACE}.svc.cluster.local
           securityContext:
             allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
             capabilities:
               drop: [ALL]
           resources:
@@ -43,11 +45,23 @@ spec:
               path: /
               port: 8080
             initialDelaySeconds: 5
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: config
+              mountPath: /etc/nginx/conf.d
           livenessProbe:
             httpGet:
               path: /
               port: 8080
             initialDelaySeconds: 15
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 32Mi
+        - name: config
+          emptyDir:
+            sizeLimit: 1Mi
 ---
 apiVersion: v1
 kind: Service

@@ -1,0 +1,88 @@
+services:
+  prometheus:
+    image: prom/prometheus:v3.16.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=48h
+      - --storage.tsdb.retention.size=512MB
+      - --web.enable-remote-write-receiver
+    ports: ["127.0.0.1:9090:9090"]
+    volumes:
+      - ./observability/prometheus/local.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    mem_limit: 512m
+    cpus: 0.5
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs: [/tmp]
+    restart: "no"
+  loki:
+    image: grafana/loki:3.7.10
+    command: [-config.file=/etc/loki/config.yml]
+    ports: ["127.0.0.1:3100:3100"]
+    volumes:
+      - ./observability/loki/config.yml:/etc/loki/config.yml:ro
+      - loki-data:/loki
+    mem_limit: 512m
+    cpus: 0.5
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs: [/tmp]
+    restart: "no"
+  alloy:
+    image: grafana/alloy:v1.22.0
+    user: "473:473"
+    group_add: ["0"]
+    command: [run, --server.http.listen-addr=0.0.0.0:12345, --storage.path=/var/lib/alloy, /config]
+    environment:
+      POSTGRES_DSN: postgresql://ep3_monitor:${MONITORING_PASSWORD:?Ejecuta scripts/prepare-local.py}@ep02-db:5432/ep02?sslmode=disable
+      COMPOSE_PROJECT: ${COMPOSE_PROJECT:-ep2-local}
+      EP3_ENVIRONMENT: local
+      FRONTEND_URL: http://ep02-frontend:8080/
+      API_URL: http://ep02-frontend:8080/api/empresas
+    volumes:
+      - ./observability/alloy/common.alloy:/config/common.alloy:ro
+      - ./observability/alloy/local.alloy:/config/local.alloy:ro
+      - ./.local/metrics:/metrics:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - alloy-data:/var/lib/alloy
+    mem_limit: 256m
+    cpus: 0.5
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs: [/tmp]
+    restart: "no"
+    depends_on: [prometheus, loki]
+  grafana:
+    image: grafana/grafana:13.3.1
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Ejecuta scripts/prepare-local.py}
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_PLUGINS_PREINSTALL_DISABLED: "true"
+      PROMETHEUS_URL: http://prometheus:9090
+      LOKI_URL: http://loki:3100
+    ports: ["127.0.0.1:3000:3000"]
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    mem_limit: 512m
+    cpus: 0.5
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs: [/tmp]
+    restart: "no"
+    depends_on: [prometheus, loki]
+volumes:
+  prometheus-data:
+  loki-data:
+  alloy-data:
+  grafana-data:

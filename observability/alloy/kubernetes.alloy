@@ -1,0 +1,57 @@
+discovery.kubernetes "pods" {
+  role = "pod"
+  namespaces {
+    names = [sys.env("NAMESPACE")]
+  }
+}
+
+discovery.relabel "logs" {
+  targets = discovery.kubernetes.pods.targets
+  rule {
+    source_labels = ["__meta_kubernetes_pod_label_app"]
+    regex = "ep02-(backend|frontend|database)"
+    action = "keep"
+  }
+  rule {
+    source_labels = ["__meta_kubernetes_pod_label_app"]
+    regex = "ep02-(.*)"
+    replacement = "$1"
+    target_label = "service"
+  }
+  rule {
+    source_labels = ["service"]
+    regex = "database"
+    replacement = "db"
+    target_label = "service"
+  }
+  rule {
+    target_label = "environment"
+    replacement = "eks"
+  }
+  rule {
+    source_labels = ["__meta_kubernetes_pod_name"]
+    target_label = "pod"
+  }
+}
+
+loki.source.kubernetes "app" {
+  targets = discovery.relabel.logs.output
+  forward_to = [loki.process.sanitize.receiver]
+}
+
+loki.source.kubernetes_events "events" {
+  namespaces = [sys.env("NAMESPACE")]
+  forward_to = [loki.relabel.events.receiver]
+}
+
+loki.relabel "events" {
+  rule {
+    target_label = "environment"
+    replacement = "eks"
+  }
+  rule {
+    target_label = "service"
+    replacement = "kubernetes"
+  }
+  forward_to = [loki.process.sanitize.receiver]
+}
