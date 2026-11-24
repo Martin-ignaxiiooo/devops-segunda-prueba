@@ -1,5 +1,7 @@
 # EP2 - Ingeniería DevOps (DOY0101): Empresas
 
+La extensión EP3 se documenta en [operación y verificación](docs/EP3.md) y [evidencias](docs/EP3-evidencias.md). Conserva Empresas y los controles EP2. Las comprobaciones locales no se presentan como despliegues AWS.
+
 ![CI/CD AWS](https://github.com/Martin-ignaxiiooo/devops-segunda-prueba/actions/workflows/ci-cd.yml/badge.svg?branch=main)
 
 ## Continuidad con EP1
@@ -186,3 +188,6 @@ Durante este proyecto, mi tarea principal fue configurar los flujos de trabajo e
 ### Martin Peña
 
 Me enfoqué en la infraestructura, específicamente en empaquetar nuestra aplicación usando Docker, lo que me demostró el valor de poder ejecutar todo en contenedores aislados sin problemas de compatibilidad. Lo más difícil del proceso fue lograr que el despliegue automatizado en Kubernetes sobre AWS funcionara correctamente debido a la configuración de red, pero lo resolví ajustando los manifiestos apoyándome en la documentación. Además, al integrar herramientas como SonarQube y Trivy, aprendí que la seguridad no es opcional; poder detectar vulnerabilidades en el código y en las imágenes antes de desplegar me dio una visión mucho más profesional sobre cómo subir aplicaciones a la nube.
+# Cierre EP3
+
+Estado verificable, publicación y pendientes: [docs/CIERRE_EP3.md](docs/CIERRE_EP3.md).
