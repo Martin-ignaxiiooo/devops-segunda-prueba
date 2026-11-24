@@ -1,7 +1,7 @@
 name: CI/CD AWS Learner Lab
 on:
   push:
-    branches: [main]
+    branches: [main, ep3/observabilidad]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -27,6 +27,8 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - run: chmod +x gradlew
       - run: ./gradlew test jacocoTestCoverageVerification --no-daemon
+      - name: Procedencia de cobertura backend
+        run: python3 ../scripts/ci-metrics.py provenance --report build/reports/jacoco/test/jacocoTestReport.xml --output build/reports/provenance.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -37,6 +39,7 @@ jobs:
             backend/build/test-results/
             backend/build/classes/java/main/
             backend/build/classes/java/test/
+            backend/build/reports/provenance.json
   frontend:
     name: Frontend - Vitest y cobertura
     runs-on: ubuntu-latest
@@ -56,6 +59,8 @@ jobs:
         run: npm audit --audit-level=high
       - run: npm run lint
       - run: npm run test:coverage
+      - name: Procedencia de cobertura frontend
+        run: python3 ../scripts/ci-metrics.py provenance --report coverage/lcov.info --output coverage/provenance.json
       - run: npm run build
       - uses: actions/upload-artifact@v4
         if: always()
@@ -164,9 +169,35 @@ jobs:
         with:
           name: trivy-${{ matrix.component }}
           path: trivy-${{ matrix.component }}.txt
+  configuration:
+    name: Manifiestos y observabilidad - auditoria
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r scripts/requirements-validation.txt
+      - run: python3 -m unittest discover -s scripts/tests -v
+      - run: bash scripts/validate-config.sh
+      - name: Trivy - configuraciones HIGH y CRITICAL
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: config
+          scan-ref: reports/kubernetes
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+          output: reports/trivy-config.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: configuration-audit
+          path: reports/
+          retention-days: 60
   deploy:
     name: Publicar ECR y desplegar EKS
-    needs: [backend, frontend, security, containers]
+    needs: [backend, frontend, security, containers, configuration]
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -177,6 +208,7 @@ jobs:
       NAMESPACE: ep02
       DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
       IMAGE_TAG: ${{ github.sha }}-${{ github.run_number }}-${{ github.run_attempt }}
+      OBSERVABILITY_GRAFANA_IN_CLUSTER: ${{ vars.OBSERVABILITY_GRAFANA_IN_CLUSTER || 'false' }}
     steps:
       - uses: actions/checkout@v4
       - name: Validar configuracion
@@ -195,6 +227,14 @@ jobs:
         with:
           pattern: image-*
           path: /tmp/images
+      - uses: actions/download-artifact@v4
+        with:
+          name: backend-tests
+          path: backend/build
+      - uses: actions/download-artifact@v4
+        with:
+          name: frontend-coverage
+          path: frontend/coverage
       - name: Publicar exactamente las imagenes verificadas
         env:
           ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
@@ -224,7 +264,17 @@ jobs:
           kubectl patch deployment ebs-csi-controller -n kube-system --type merge --patch-file infra/ebs-csi-lab-patch.json
           kubectl rollout status deployment/ebs-csi-controller -n kube-system --timeout=180s
       - name: Aplicar y comprobar despliegue
-        run: bash scripts/deploy.sh
+        run: python3 scripts/timed-deploy.py --environment eks --output evidence/deploy-timing.json -- bash scripts/deploy.sh
+      - name: Publicar metricas del despliegue aprobado
+        run: |
+          set -euo pipefail
+          python3 scripts/ci-metrics.py collect --environment eks \
+            --jacoco backend/build/reports/jacoco/test/jacocoTestReport.xml \
+            --lcov frontend/coverage/lcov.info \
+            --backend-source backend/build/reports/provenance.json \
+            --frontend-source frontend/coverage/provenance.json \
+            --duration evidence/deploy-timing.json --output evidence/ci.prom
+          kubectl create configmap ep3-ci-metrics -n "$NAMESPACE" --from-file=ci.prom=evidence/ci.prom --dry-run=client -o yaml | kubectl apply -f -
       - name: Evidencia de trazabilidad
         run: |
           mkdir -p evidence
@@ -242,3 +292,4 @@ jobs:
           name: deploy-evidence
           path: evidence/
           if-no-files-found: ignore
+          retention-days: 60

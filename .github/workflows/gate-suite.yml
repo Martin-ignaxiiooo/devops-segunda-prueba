@@ -1,0 +1,35 @@
+name: EP3 - evidencia real de bloqueos
+on:
+  push:
+    branches: [ep3/observabilidad]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  scenario:
+    name: escenario-${{ matrix.scenario }}
+    strategy:
+      fail-fast: false
+      matrix:
+        scenario: [success, quality, compliance, recovery]
+    uses: ./.github/workflows/gate-drill.yml
+    with:
+      scenario: ${{ matrix.scenario }}
+  verify:
+    name: Comprobar bloqueos esperados
+    needs: scenario
+    if: always() && !cancelled()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Contrastar estados reales de los jobs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 scripts/verify-gate-run.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gate-suite-results
+          path: evidence/gate-suite-results.json
+          retention-days: 60

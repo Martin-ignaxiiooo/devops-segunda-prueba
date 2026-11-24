@@ -1,6 +1,10 @@
 services:
   ep02-db:
     build: ./database
+    read_only: true
+    tmpfs:
+      - /var/run/postgresql:uid=70,gid=70,mode=0775
+      - /tmp
     environment:
       POSTGRES_DB: ep02
       POSTGRES_USER: ep02_user
@@ -17,6 +21,8 @@ services:
     restart: unless-stopped
   ep02-backend:
     build: ./backend
+    read_only: true
+    tmpfs: [/tmp]
     environment:
       SPRING_PROFILES_ACTIVE: prod
       DB_URL: jdbc:postgresql://ep02-db:5432/ep02
@@ -30,6 +36,10 @@ services:
     restart: unless-stopped
   ep02-frontend:
     build: ./frontend
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /etc/nginx/conf.d:uid=101,gid=101,mode=0775
     environment:
       BACKEND_HOST: ep02-backend
     ports:

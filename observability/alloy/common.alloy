@@ -1,0 +1,79 @@
+logging {
+  level = "warn"
+}
+
+prometheus.remote_write "store" {
+  external_labels = {environment = sys.env("EP3_ENVIRONMENT")}
+  endpoint {
+    url = "http://prometheus:9090/api/v1/write"
+  }
+}
+
+prometheus.exporter.unix "files" {
+  set_collectors = ["textfile"]
+  textfile {
+    directory = "/metrics"
+  }
+}
+
+discovery.relabel "files" {
+  targets = prometheus.exporter.unix.files.targets
+  rule {
+    target_label = "instance"
+    replacement = "ep3-files"
+  }
+}
+
+prometheus.scrape "files" {
+  targets = discovery.relabel.files.output
+  scrape_interval = "15s"
+  forward_to = [prometheus.remote_write.store.receiver]
+}
+
+prometheus.exporter.postgres "database" {
+  data_source_names = [sys.env("POSTGRES_DSN")]
+  disable_settings_metrics = true
+  enabled_collectors = ["stat_database", "stat_activity_autovacuum"]
+}
+
+prometheus.scrape "database" {
+  targets = prometheus.exporter.postgres.database.targets
+  scrape_interval = "30s"
+  forward_to = [prometheus.remote_write.store.receiver]
+}
+
+prometheus.exporter.blackbox "http" {
+  config = "modules: {http_2xx: {prober: http, timeout: 5s, http: {valid_status_codes: [200]}}}"
+  target {
+    name = "frontend"
+    address = sys.env("FRONTEND_URL")
+    module = "http_2xx"
+    labels = {service = "frontend"}
+  }
+  target {
+    name = "api"
+    address = sys.env("API_URL")
+    module = "http_2xx"
+    labels = {service = "api"}
+  }
+}
+
+prometheus.scrape "http" {
+  targets = prometheus.exporter.blackbox.http.targets
+  scrape_interval = "15s"
+  forward_to = [prometheus.remote_write.store.receiver]
+}
+
+loki.process "sanitize" {
+  stage.drop {
+    expression = "(?i)(generated security password|authorization:|password=|xsrf-token=)"
+    drop_counter_reason = "credentials"
+  }
+  forward_to = [loki.write.store.receiver]
+}
+
+loki.write "store" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}

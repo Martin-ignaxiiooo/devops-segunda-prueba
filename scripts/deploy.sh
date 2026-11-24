@@ -16,6 +16,20 @@ kubectl apply -f /tmp/ep02-manifests.yaml
 for component in database backend frontend; do
   kubectl rollout status "deployment/ep02-$component" -n "$NAMESPACE" --timeout=600s
 done
+# Solo servicios internos y almacenamiento efímero; no crea EKS/ECR/nodos/volúmenes.
+obs_args=()
+if [ "${OBSERVABILITY_GRAFANA_IN_CLUSTER:-false}" = "true" ]; then obs_args+=(--include-grafana); fi
+python3 scripts/check-capacity.py "${obs_args[@]}"
+python3 scripts/prepare-monitoring.py
+python3 scripts/render-observability.py --namespace "$NAMESPACE" "${obs_args[@]}" > /tmp/ep3-observability.json
+kubectl apply -f /tmp/ep3-observability.json
+for component in prometheus loki alloy; do
+  kubectl rollout restart "deployment/ep3-$component" -n "$NAMESPACE"
+  kubectl rollout status "deployment/ep3-$component" -n "$NAMESPACE" --timeout=300s
+done
+if [ "${OBSERVABILITY_GRAFANA_IN_CLUSTER:-false}" = "true" ]; then
+  kubectl rollout status deployment/ep3-grafana -n "$NAMESPACE" --timeout=300s
+fi
 # Verifica salud y acceso real a la BD a traves del proxy del frontend.
 kubectl port-forward -n "$NAMESPACE" service/ep02-frontend 18081:80 >/tmp/ep02-port-forward.log 2>&1 &
 forward_pid=$!
